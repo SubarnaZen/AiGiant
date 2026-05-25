@@ -1,5 +1,3 @@
-html
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -387,7 +385,7 @@ select.form-control { cursor: pointer; }
     </div>
     <div class="form-group">
       <label class="form-label">Gist ID <span style="font-weight:400;color:var(--text-muted)">(from your other device)</span></label>
-      <input type="text" id="wc-gist-id" class="form-control" placeholder="abc123def456..."/>
+      <input type="text" id="wc-gist-id" class="form-control" placeholder="Paste Gist ID or Gist URL here…"/>
     </div>
     <div id="wc-restore-error" style="color:var(--danger);font-size:11px;display:none;margin-bottom:10px;"></div>
     <div id="wc-restore-loading" style="font-size:11px;color:var(--accent);display:none;margin-bottom:10px;">
@@ -609,7 +607,7 @@ select.form-control { cursor: pointer; }
       </div>
       <div class="form-group">
         <label class="form-label">Gist ID <span style="font-weight:400;color:var(--text-muted);">(leave empty to auto-create new)</span></label>
-        <input type="text" id="gist-id-input" class="form-control" placeholder="Leave empty to create new…"/>
+        <input type="text" id="gist-id-input" class="form-control" placeholder="Paste Gist ID or Gist URL here…"/>
       </div>
       <div id="gist-connect-error" style="color:var(--danger);font-size:11px;display:none;margin-bottom:10px;"></div>
       <div id="gist-connect-success" style="color:var(--success);font-size:11px;display:none;margin-bottom:10px;"></div>
@@ -690,11 +688,17 @@ function loadState() {
 // ══════════════════════════════════════════════
 function init() {
   loadState();
-  // Check URL params for gist share
-  const params = new URLSearchParams(location.search);
-  const sharedGist = params.get('gist');
+  // Check URL hash for gist share (primary: #gist=abc123)
+  // Also check query params for backward compatibility (?gist=abc123)
+  let sharedGist = '';
+  const hashMatch = location.hash.match(/[#&]gist=([^&]+)/);
+  if (hashMatch) sharedGist = hashMatch[1];
+  if (!sharedGist) {
+    const params = new URLSearchParams(location.search);
+    sharedGist = params.get('gist') || '';
+  }
   if (sharedGist && !state.initialized) {
-    document.getElementById('wc-gist-id').value = sharedGist;
+    document.getElementById('wc-gist-id').value = extractGistId(sharedGist);
   }
 
   if (!state.initialized) {
@@ -713,6 +717,10 @@ function bootApp() {
   document.getElementById('lock-screen').classList.add('hidden');
   renderAll();
   updateSyncStatus();
+  // Auto-pull on boot if Gist is connected
+  if (state.gistToken && state.gistId) {
+    doSync(true);
+  }
 }
 
 // ══════════════════════════════════════════════
@@ -720,7 +728,8 @@ function bootApp() {
 // ══════════════════════════════════════════════
 async function welcomeRestore() {
   const token = document.getElementById('wc-token').value.trim();
-  const gistId = document.getElementById('wc-gist-id').value.trim();
+  const gistIdRaw = document.getElementById('wc-gist-id').value.trim();
+  const gistId = extractGistId(gistIdRaw);
   const errEl = document.getElementById('wc-restore-error');
   const loadEl = document.getElementById('wc-restore-loading');
   errEl.style.display = 'none';
@@ -734,6 +743,8 @@ async function welcomeRestore() {
     saveState();
     loadEl.style.display = 'none';
     bootApp();
+    // Push back to Gist to ensure it's up to date with merged data
+    await pushToGist();
   } catch(e) {
     loadEl.style.display = 'none';
     errEl.textContent = 'Could not connect: ' + e.message;
@@ -940,6 +951,7 @@ function saveShortcut() {
     openMode: document.getElementById('sc-open-mode').value,
     priority: document.getElementById('sc-priority').checked,
     createdAt: editingId ? (state.shortcuts.find(x=>x.id===editingId)?.createdAt||Date.now()) : Date.now(),
+    updatedAt: Date.now(),
   };
   if (editingId) {
     const idx = state.shortcuts.findIndex(x=>x.id===editingId);
@@ -1104,6 +1116,219 @@ function previewFavicon() {
 // ══════════════════════════════════════════════
 //  GIST SYNC
 // ══════════════════════════════════════════════
+
+let _syncing = false;
+let autoSyncTimer;
+
+// Extract Gist ID from raw ID, full URL, or /username/id path
+function extractGistId(input) {
+  if (!input) return '';
+  input = input.trim();
+  if (input.indexOf('/') !== -1) {
+    const parts = input.replace(/^https?:\/\//, '').split('/');
+    for (let i = parts.length - 1; i >= 0; i--) {
+      if (parts[i] && /^[a-f0-9]{20,}$/i.test(parts[i])) return parts[i];
+    }
+    for (let j = parts.length - 1; j >= 0; j--) {
+      if (parts[j] && parts[j] !== 'gist.github.com' && parts[j] !== 'github.com') return parts[j];
+    }
+  }
+  return input;
+}
+
+// Build Authorization header — supports both classic and fine-grained tokens
+function authHeader(token) {
+  if (!token) return {};
+  if (token.indexOf('github_pat_') === 0) return { Authorization: 'Bearer ' + token };
+  return { Authorization: 'token ' + token };
+}
+
+// Parse Gist file content — handles truncated files
+async function parseGistContent(gistData, token) {
+  const file = gistData.files && gistData.files['aig-data.json'];
+  if (!file) return null;
+  let content;
+  if (file.truncated) {
+    if (!file.raw_url) throw new Error('Gist data is too large to load');
+    const headers = { Accept: 'application/json' };
+    if (token) Object.assign(headers, authHeader(token));
+    const rawRes = await fetch(file.raw_url, { headers });
+    if (!rawRes.ok) throw new Error('Could not fetch full Gist data');
+    content = await rawRes.text();
+  } else {
+    content = file.content;
+  }
+  if (!content) return null;
+  return JSON.parse(content);
+}
+
+// Fetch and parse Gist data
+async function fetchGist(token, id) {
+  const res = await fetch(`https://api.github.com/gists/${id}`, {
+    headers: { ...authHeader(token), Accept: 'application/vnd.github.v3+json' }
+  });
+  if (!res.ok) {
+    if (res.status === 401) throw new Error('Invalid GitHub token. Make sure it has "gist" scope.');
+    if (res.status === 404) throw new Error('Gist not found. Check the Gist ID.');
+    throw new Error(`GitHub API error: ${res.status}`);
+  }
+  const gist = await res.json();
+  const data = await parseGistContent(gist, token);
+  return data || {};
+}
+
+// Create a new Gist
+async function createGist(token) {
+  const res = await fetch('https://api.github.com/gists', {
+    method: 'POST',
+    headers: { ...authHeader(token), Accept: 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      description: 'AI Giant — SubarnaZen Nexus Data',
+      public: false,
+      files: { 'aig-data.json': { content: JSON.stringify(gistPayload()) } }
+    })
+  });
+  if (!res.ok) {
+    if (res.status === 401) throw new Error('Invalid GitHub token. Make sure it has "gist" scope.');
+    throw new Error(`Could not create Gist: ${res.status}`);
+  }
+  const gist = await res.json();
+  return gist.id;
+}
+
+// Push current data to Gist
+async function pushToGist() {
+  if (!state.gistToken || !state.gistId) return;
+  const res = await fetch(`https://api.github.com/gists/${state.gistId}`, {
+    method: 'PATCH',
+    headers: { ...authHeader(state.gistToken), Accept: 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ files: { 'aig-data.json': { content: JSON.stringify(gistPayload()) } } })
+  });
+  if (!res.ok) {
+    if (res.status === 401) throw new Error('Token expired or invalid');
+    throw new Error(`Save failed: ${res.status}`);
+  }
+}
+
+// Build the data payload for Gist
+function gistPayload() {
+  return {
+    shortcuts: state.shortcuts,
+    groups: state.groups,
+    apiKeys: state.apiKeys,
+    history: state.history,
+    _updatedAt: new Date().toISOString()
+  };
+}
+
+// MERGE remote data into local (doesn't destroy local data)
+function mergeGistData(data) {
+  if (!data) return { added: 0, updated: 0 };
+  let added = 0, updated = 0;
+
+  // Merge groups — add missing ones
+  if (data.groups) {
+    data.groups.forEach(g => {
+      if (!state.groups.includes(g)) state.groups.push(g);
+    });
+  }
+
+  // Merge shortcuts — add new, update if remote is newer
+  if (data.shortcuts) {
+    const localByUrl = {};
+    state.shortcuts.forEach(s => { localByUrl[s.url] = s; });
+
+    data.shortcuts.forEach(remote => {
+      const local = localByUrl[remote.url];
+      if (!local) {
+        state.shortcuts.push({ ...remote });
+        added++;
+      } else if (remote.updatedAt && (!local.updatedAt || remote.updatedAt > local.updatedAt)) {
+        // Remote is newer — update local (keep local id)
+        Object.assign(local, remote, { id: local.id });
+        updated++;
+      }
+    });
+  }
+
+  // Merge apiKeys — add missing keys
+  if (data.apiKeys) {
+    Object.keys(data.apiKeys).forEach(k => {
+      if (data.apiKeys[k] && !state.apiKeys[k]) state.apiKeys[k] = data.apiKeys[k];
+    });
+  }
+
+  // Merge history — add missing entries
+  if (data.history) {
+    const localUrls = new Set(state.history.map(h => h.url));
+    data.history.forEach(h => {
+      if (!localUrls.has(h.url)) {
+        state.history.push(h);
+        localUrls.add(h.url);
+      }
+    });
+    if (state.history.length > 50) state.history = state.history.slice(0, 50);
+  }
+
+  return { added, updated };
+}
+
+// Replace local data with Gist data (for new device restore)
+function applyGistData(data, token, id) {
+  if (data.shortcuts) state.shortcuts = data.shortcuts;
+  if (data.groups) state.groups = data.groups;
+  if (data.apiKeys) state.apiKeys = data.apiKeys;
+  if (data.history) state.history = data.history;
+  state.gistToken = token;
+  state.gistId = id;
+}
+
+// Full sync: pull from Gist (merge), then push merged data back
+async function doSync(silent = false) {
+  if (!state.gistToken || !state.gistId) {
+    if (!silent) showToast('No Gist connected', 'error');
+    return;
+  }
+  if (_syncing) {
+    if (!silent) showToast('Sync already in progress', 'error');
+    return;
+  }
+  _syncing = true;
+  clearTimeout(autoSyncTimer);
+  const btn = document.getElementById('sync-now-btn');
+  if (btn) btn.innerHTML = '<span class="sync-spinner"></span> Syncing…';
+  try {
+    // Step 1: Pull from Gist and merge
+    const data = await fetchGist(state.gistToken, state.gistId);
+    const mergeResult = mergeGistData(data);
+    saveState();
+
+    // Step 2: Push merged data back
+    await pushToGist();
+
+    renderAll();
+    if (!silent) {
+      if (mergeResult.added > 0) showToast(`Synced! ${mergeResult.added} new + ${mergeResult.updated} updated from Gist ✓`, 'success');
+      else if (mergeResult.updated > 0) showToast(`Synced! ${mergeResult.updated} updated from Gist ✓`, 'success');
+      else showToast('Synced! Your data is up to date ✓', 'success');
+    }
+  } catch(e) {
+    if (!silent) showToast('Sync failed: ' + e.message, 'error');
+    else console.warn('Auto-sync failed:', e.message);
+  } finally {
+    _syncing = false;
+    if (btn) btn.innerHTML = '🔄 <span class="btn-text">Sync Now</span>';
+  }
+}
+
+// Auto-sync: debounced full sync (pull+push) triggered by local data changes
+function autoSync() {
+  if (!state.gistToken || !state.gistId) return;
+  if (_syncing) return;
+  clearTimeout(autoSyncTimer);
+  autoSyncTimer = setTimeout(() => doSync(true), 3000);
+}
+
 function openGistModal() {
   const errEl = document.getElementById('gist-connect-error');
   const sucEl = document.getElementById('gist-connect-success');
@@ -1123,33 +1348,49 @@ function openGistModal() {
 
 async function connectGist() {
   const token = document.getElementById('gist-token-input').value.trim();
-  const gistId = document.getElementById('gist-id-input').value.trim();
+  const gistIdRaw = document.getElementById('gist-id-input').value.trim();
+  const gistId = extractGistId(gistIdRaw);
   const errEl = document.getElementById('gist-connect-error');
   const sucEl = document.getElementById('gist-connect-success');
   const loadEl = document.getElementById('gist-connect-loading');
   errEl.style.display = 'none'; sucEl.style.display = 'none';
+  if (gistId !== gistIdRaw && gistId) {
+    document.getElementById('gist-id-input').value = gistId;
+  }
   if (!token) { errEl.textContent = 'Token is required.'; errEl.style.display = 'block'; return; }
   loadEl.style.display = 'block';
   try {
     let id = gistId;
     if (!id) {
-      // Create new gist
       id = await createGist(token);
+      // Credentials valid — save them after successful creation
+      state.gistToken = token;
+      state.gistId = id;
+      saveState();
+      loadEl.style.display = 'none';
       sucEl.textContent = `New Gist created! ID: ${id}`;
+      sucEl.style.display = 'block';
+      updateSyncStatus();
+      renderAll();
+      showToast('Gist connected ✓', 'success');
     } else {
+      // Validate credentials by fetching the Gist
       const data = await fetchGist(token, id);
-      applyGistData(data, token, id);
+      // Credentials valid — save them
+      state.gistToken = token;
+      state.gistId = id;
+      // Merge remote data into local
+      mergeGistData(data);
+      saveState();
+      // Push merged data back
+      await pushToGist();
+      loadEl.style.display = 'none';
       sucEl.textContent = 'Connected and synced successfully!';
+      sucEl.style.display = 'block';
+      updateSyncStatus();
+      renderAll();
+      showToast('Gist connected and synced ✓', 'success');
     }
-    state.gistToken = token;
-    state.gistId = id;
-    loadEl.style.display = 'none';
-    sucEl.style.display = 'block';
-    saveState();
-    await pushToGist();
-    updateSyncStatus();
-    renderAll();
-    showToast('Gist connected ✓', 'success');
   } catch(e) {
     loadEl.style.display = 'none';
     errEl.textContent = 'Error: ' + e.message;
@@ -1165,75 +1406,6 @@ function disconnectGist() {
   updateSyncStatus();
   closeModal('gist-connect-modal');
   showToast('Gist disconnected');
-}
-
-async function fetchGist(token, id) {
-  const res = await fetch(`https://api.github.com/gists/${id}`, {
-    headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github.v3+json' }
-  });
-  if (!res.ok) throw new Error(`GitHub API error: ${res.status} ${res.statusText}`);
-  const gist = await res.json();
-  const file = gist.files['aig-data.json'];
-  if (!file) return {};
-  return JSON.parse(file.content);
-}
-
-async function createGist(token) {
-  const res = await fetch('https://api.github.com/gists', {
-    method: 'POST',
-    headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      description: 'AI Giant — SubarnaZen Nexus Data',
-      public: false,
-      files: { 'aig-data.json': { content: JSON.stringify(gistPayload()) } }
-    })
-  });
-  if (!res.ok) throw new Error(`Could not create Gist: ${res.status} ${res.statusText}`);
-  const gist = await res.json();
-  return gist.id;
-}
-
-async function pushToGist() {
-  if (!state.gistToken || !state.gistId) return;
-  const res = await fetch(`https://api.github.com/gists/${state.gistId}`, {
-    method: 'PATCH',
-    headers: { Authorization: `token ${state.gistToken}`, Accept: 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
-    body: JSON.stringify({ files: { 'aig-data.json': { content: JSON.stringify(gistPayload()) } } })
-  });
-  if (!res.ok) throw new Error(`Sync failed: ${res.status}`);
-}
-
-function gistPayload() {
-  return { shortcuts: state.shortcuts, groups: state.groups, apiKeys: state.apiKeys, history: state.history };
-}
-
-function applyGistData(data, token, id) {
-  if (data.shortcuts) state.shortcuts = data.shortcuts;
-  if (data.groups) state.groups = data.groups;
-  if (data.apiKeys) state.apiKeys = data.apiKeys;
-  if (data.history) state.history = data.history;
-  state.gistToken = token;
-  state.gistId = id;
-}
-
-async function doSync() {
-  if (!state.gistToken || !state.gistId) { showToast('No Gist connected', 'error'); return; }
-  const btn = document.getElementById('sync-now-btn');
-  btn.textContent = '🔄 Syncing…';
-  try {
-    await pushToGist();
-    showToast('Synced to Gist ✓', 'success');
-  } catch(e) {
-    showToast('Sync failed: ' + e.message, 'error');
-  }
-  btn.innerHTML = '🔄 <span class="btn-text">Sync Now</span>';
-}
-
-let autoSyncTimer;
-function autoSync() {
-  if (!state.gistToken || !state.gistId) return;
-  clearTimeout(autoSyncTimer);
-  autoSyncTimer = setTimeout(() => pushToGist().catch(()=>{}), 3000);
 }
 
 function updateSyncStatus() {
@@ -1255,7 +1427,7 @@ function updateSyncStatus() {
 
 function shareLink() {
   if (!state.gistId) { showToast('Connect a Gist first', 'error'); return; }
-  const url = `${location.origin}${location.pathname}?gist=${state.gistId}`;
+  const url = `${location.origin}${location.pathname}#gist=${state.gistId}`;
   navigator.clipboard.writeText(url).then(() => showToast('Share link copied ✓', 'success')).catch(() => {
     prompt('Copy this share link:', url);
   });
