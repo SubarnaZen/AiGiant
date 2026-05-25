@@ -219,9 +219,11 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label">Gist ID <span style="font-weight:400;color:var(--text-muted);">(from your other device)</span></label>
-                    <input type="text" class="form-input" id="welcome-gist-id" placeholder="Paste your Gist ID here...">
+                    <input type="text" class="form-input" id="welcome-gist-id" placeholder="Paste Gist ID or Gist URL here...">
                 </div>
-                <button class="btn-primary" style="width:100%;" onclick="app.restoreFromWelcome()"><i class="fa-solid fa-cloud-arrow-down"></i> Restore My Data</button>
+                <div id="welcome-restore-error" style="color:var(--danger);font-size:11px;display:none;margin-bottom:10px;"></div>
+                <div id="welcome-restore-loading" style="font-size:11px;color:var(--accent);display:none;margin-bottom:10px;"><span class="sync-spinner"></span> Connecting to GitHub Gist...</div>
+                <button class="btn-primary" style="width:100%;" id="welcome-restore-btn" onclick="app.restoreFromWelcome()"><i class="fa-solid fa-cloud-arrow-down"></i> Restore My Data</button>
             </div>
         </div>
         <div class="welcome-or">or</div>
@@ -446,7 +448,7 @@
             </div>
             <div class="form-group">
                 <label class="form-label">Gist ID <span style="font-weight:400;color:var(--text-muted);">(leave empty to auto-create new)</span></label>
-                <input type="text" class="form-input" id="connect-gist-id" placeholder="Paste Gist ID from another device...">
+                <input type="text" class="form-input" id="connect-gist-id" placeholder="Paste Gist ID or full Gist URL...">
             </div>
             <div id="gist-connect-error" style="color:var(--danger);font-size:11px;display:none;margin-bottom:10px;"></div>
             <div id="gist-connect-success" style="color:var(--success);font-size:11px;display:none;margin-bottom:10px;"></div>
@@ -599,6 +601,35 @@ var gistSync = {
     token: '', gistId: '', _syncDebounce: null, lastSyncAt: null,
     _isLoading: false, _isSaving: false, _suppressAutoSync: false,
 
+    /* Extract Gist ID from user input — handles raw IDs, full URLs, and /username/id paths */
+    _extractGistId: function(input) {
+        if (!input) return '';
+        input = input.trim();
+        /* If it looks like a URL, extract the Gist ID from the path */
+        if (input.indexOf('/') !== -1) {
+            /* e.g. https://gist.github.com/username/abc123def456 or gist.github.com/abc123 */
+            var parts = input.replace(/^https?:\/\//, '').split('/');
+            /* Gist IDs are 32+ character hex strings. Find the segment that looks like a Gist ID */
+            for (var i = parts.length - 1; i >= 0; i--) {
+                if (parts[i] && /^[a-f0-9]{20,}$/i.test(parts[i])) return parts[i];
+            }
+            /* Fallback: take the last non-empty segment that isn't the domain */
+            for (var j = parts.length - 1; j >= 0; j--) {
+                if (parts[j] && parts[j] !== 'gist.github.com' && parts[j] !== 'github.com') return parts[j];
+            }
+        }
+        return input;
+    },
+
+    /* Build Authorization header — supports both classic (ghp_) and fine-grained (github_pat_) tokens */
+    _authHeader: function(token) {
+        if (!token) return {};
+        if (token.indexOf('github_pat_') === 0) {
+            return { 'Authorization': 'Bearer ' + token };
+        }
+        return { 'Authorization': 'token ' + token };
+    },
+
     init: function() {
         var saved = localStorage.getItem('aig_gist');
         if (saved) {
@@ -646,7 +677,7 @@ var gistSync = {
         /* Also check URL hash */
         var hash = window.location.hash;
         if (hash && hash.startsWith('#gist=')) {
-            idField.value = hash.substring(6);
+            idField.value = this._extractGistId(hash.substring(6));
             history.replaceState(null, '', window.location.pathname);
         }
 
@@ -676,10 +707,16 @@ var gistSync = {
     /* Called from the Connect Modal form */
     connectFromModal: async function() {
         var token = document.getElementById('connect-gist-token').value.trim();
-        var gistId = document.getElementById('connect-gist-id').value.trim();
+        var gistIdRaw = document.getElementById('connect-gist-id').value.trim();
+        var gistId = this._extractGistId(gistIdRaw);
         var errEl = document.getElementById('gist-connect-error');
         var successEl = document.getElementById('gist-connect-success');
         var submitBtn = document.getElementById('gist-connect-submit');
+
+        /* Update the field with cleaned Gist ID */
+        if (gistId !== gistIdRaw && gistId) {
+            document.getElementById('connect-gist-id').value = gistId;
+        }
 
         if (!token) {
             errEl.textContent = 'Please enter your GitHub Personal Access Token.';
@@ -702,7 +739,7 @@ var gistSync = {
                 /* Create new Gist */
                 var res = await fetch('https://api.github.com/gists', {
                     method: 'POST',
-                    headers: { 'Authorization': 'token ' + token, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' },
+                    headers: Object.assign({}, this._authHeader(token), { 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' }),
                     body: JSON.stringify({ description: 'AI Giant Data Backup', public: false,
                         files: { 'ai-giant-data.json': { content: JSON.stringify(aiGiant.getExportData(), null, 2) } }
                     })
@@ -710,48 +747,90 @@ var gistSync = {
                 var data = await res.json();
                 if (!res.ok) {
                     var errMsg = data.message || 'Failed to create Gist (HTTP ' + res.status + ')';
-                    if (res.status === 401) errMsg = 'Invalid GitHub token. Make sure it has the "gist" scope enabled.';
+                    if (res.status === 401) errMsg = 'Invalid GitHub token. Make sure it has the "gist" scope enabled. (Use Classic token, not Fine-grained)';
                     if (res.status === 403 && data.message && data.message.indexOf('rate limit') !== -1) errMsg = 'GitHub API rate limit exceeded. Please wait a minute and try again.';
                     throw new Error(errMsg);
                 }
                 gistId = data.id;
+                /* Gist was just created with our data — no need to load from it, just save credentials */
+                this.token = token;
+                this.gistId = gistId;
+                this.lastSyncAt = new Date().toISOString();
+                this._saveCredentials();
+                this.updateUI();
+                if (successEl) {
+                    successEl.innerHTML = '<i class="fa-solid fa-check-circle"></i> New Gist created! Your data is now synced.';
+                    successEl.style.display = 'block';
+                }
+                /* Close after short delay so user sees success */
+                setTimeout(function() { ui.hideModal('gist-connect-modal'); }, 1500);
+                ui.toast('Gist connected! Your shortcuts are synced to the cloud.', 'success');
             } else {
-                /* Verify existing Gist — try to read it */
+                /* Verify existing Gist — read it to validate token AND get data in one request */
                 var res2 = await fetch('https://api.github.com/gists/' + gistId, {
-                    headers: { 'Authorization': 'token ' + token, 'Accept': 'application/vnd.github.v3+json' }
+                    headers: Object.assign({}, this._authHeader(token), { 'Accept': 'application/vnd.github.v3+json' })
                 });
                 if (!res2.ok) {
                     var errData = {};
                     try { errData = await res2.json(); } catch(e2) {}
-                    if (res2.status === 401) throw new Error('Invalid GitHub token. Make sure it has the "gist" scope enabled.');
+                    if (res2.status === 401) throw new Error('Invalid GitHub token. Make sure it has the "gist" scope enabled. (Use Classic token, not Fine-grained)');
                     if (res2.status === 404) throw new Error('Gist not found. Check the Gist ID and make sure your token has access to it.');
                     if (res2.status === 403 && errData.message && errData.message.indexOf('rate limit') !== -1) throw new Error('GitHub API rate limit exceeded. Please wait a minute and try again.');
                     throw new Error(errData.message || 'Could not access Gist (HTTP ' + res2.status + ')');
                 }
+
+                /* Save credentials — ONLY after successful validation */
+                this.token = token;
+                this.gistId = gistId;
+                this.lastSyncAt = new Date().toISOString();
+                this._saveCredentials();
+                this.updateUI();
+                this._setSyncingUI(true);
+
+                /* Show success in the modal (keep modal open during sync) */
+                if (successEl) {
+                    successEl.innerHTML = '<i class="fa-solid fa-check-circle"></i> Connected to Gist! Syncing data...';
+                    successEl.style.display = 'block';
+                }
+                if (errEl) errEl.style.display = 'none';
+
+                /* Parse the Gist data we already fetched (avoid a 2nd API call) */
+                var gistData = await res2.json();
+                var gistFile = gistData.files && gistData.files['ai-giant-data.json'];
+                if (gistFile && gistFile.content) {
+                    try {
+                        var parsed = JSON.parse(gistFile.content);
+                        if (parsed.shortcuts && Array.isArray(parsed.shortcuts)) {
+                            /* Merge the remote data into local, then push merged data back */
+                            this._suppressAutoSync = true;
+                            aiGiant.mergeImportData(parsed, true);
+                            this._suppressAutoSync = false;
+                        }
+                    } catch(parseErr) {
+                        /* Data in Gist is corrupt — still connected, just can't merge */
+                        console.warn('Could not parse Gist data:', parseErr.message);
+                    }
+                }
+
+                /* Push merged data back to Gist */
+                var saveRetries = 0;
+                while (this._isSaving && saveRetries < 10) {
+                    await new Promise(function(r) { setTimeout(r, 300); });
+                    saveRetries++;
+                }
+                await this._saveToGist();
+                this.lastSyncAt = new Date().toISOString();
+                this._saveCredentials();
+                this._setSyncingUI(false);
+
+                /* After successful sync, close the modal */
+                ui.hideModal('gist-connect-modal');
+                ui.toast('Connected! Data synced with Gist.', 'success');
             }
-
-            /* Save credentials — ONLY after successful validation */
-            this.token = token;
-            this.gistId = gistId;
-            this.lastSyncAt = new Date().toISOString();
-            this._saveCredentials();
-            this.updateUI();
-
-            /* Show success in the modal (keep modal open during sync) */
-            if (successEl) {
-                successEl.innerHTML = '<i class="fa-solid fa-check-circle"></i> Connected to Gist ' + this._escHtml(gistId) + '! Syncing data...';
-                successEl.style.display = 'block';
-            }
-            if (errEl) errEl.style.display = 'none';
-
-            /* Do the actual sync (load from Gist + push merged data) */
-            await this._doSync();
-
-            /* After successful sync, close the modal */
-            ui.hideModal('gist-connect-modal');
 
         } catch (e) {
             /* DO NOT close modal on error — keep it open so user can fix and retry */
+            this._setSyncingUI(false, e.message);
             errEl.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> ' + this._escHtml(e.message);
             errEl.style.display = 'block';
             if (successEl) successEl.style.display = 'none';
@@ -900,7 +979,13 @@ var gistSync = {
             this.lastSyncAt = new Date().toISOString();
             this._saveCredentials();
             this._setSyncingUI(false);
-            ui.toast('Synced! ' + (loaded ? loaded.shortcutCount + ' shortcuts merged.' : 'Up to date.'), 'success');
+            if (loaded && loaded.added > 0) {
+                ui.toast('Synced! ' + loaded.added + ' new + ' + loaded.updated + ' updated shortcuts from Gist.', 'success');
+            } else if (loaded && loaded.updated > 0) {
+                ui.toast('Synced! ' + loaded.updated + ' shortcuts updated from Gist.', 'success');
+            } else {
+                ui.toast('Synced! Your data is up to date.', 'success');
+            }
         } catch(e) {
             this._setSyncingUI(false, e.message);
             ui.toast('Sync failed: ' + e.message, 'error');
@@ -916,7 +1001,7 @@ var gistSync = {
         this._suppressAutoSync = true; /* Prevent save() from triggering auto-push during load */
         try {
             var res = await fetch('https://api.github.com/gists/' + this.gistId, {
-                headers: { 'Authorization': 'token ' + this.token, 'Accept': 'application/vnd.github.v3+json' }
+                headers: Object.assign({}, this._authHeader(this.token), { 'Accept': 'application/vnd.github.v3+json' })
             });
             if (!res.ok) {
                 var errData = {};
@@ -932,8 +1017,8 @@ var gistSync = {
             if (!parsed.shortcuts || !Array.isArray(parsed.shortcuts)) throw new Error('Invalid data format in Gist');
 
             /* Merge remote data into local */
-            aiGiant.mergeImportData(parsed, true);
-            return { shortcutCount: parsed.shortcuts.length };
+            var mergeResult = aiGiant.mergeImportData(parsed, true);
+            return { shortcutCount: parsed.shortcuts.length, added: mergeResult.added, updated: mergeResult.updated };
         } catch (e) {
             throw e;
         } finally {
@@ -950,7 +1035,7 @@ var gistSync = {
         this._suppressAutoSync = true;
         try {
             var res = await fetch('https://api.github.com/gists/' + this.gistId, {
-                headers: { 'Authorization': 'token ' + this.token, 'Accept': 'application/vnd.github.v3+json' }
+                headers: Object.assign({}, this._authHeader(this.token), { 'Accept': 'application/vnd.github.v3+json' })
             });
             if (!res.ok) {
                 var errData = {};
@@ -982,7 +1067,7 @@ var gistSync = {
             var content = JSON.stringify(aiGiant.getExportData(), null, 2);
             var res = await fetch('https://api.github.com/gists/' + this.gistId, {
                 method: 'PATCH',
-                headers: { 'Authorization': 'token ' + this.token, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' },
+                headers: Object.assign({}, this._authHeader(this.token), { 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' }),
                 body: JSON.stringify({ files: { 'ai-giant-data.json': { content: content } } })
             });
             if (!res.ok) {
@@ -1791,7 +1876,7 @@ var aiGiant = {
     },
 
     mergeImportData: function(parsed, silent) {
-        if (!parsed || !parsed.shortcuts) return;
+        if (!parsed || !parsed.shortcuts) return { added: 0, updated: 0 };
         var self = this;
         (parsed.groups || []).forEach(function(g) { if (self.data.groups.indexOf(g) === -1) self.data.groups.push(g); });
         var existingUrls = new Set(this.data.shortcuts.map(function(s) { return s.url; }));
@@ -1826,6 +1911,7 @@ var aiGiant = {
         this.save();
         this.render();
         if (!silent) ui.toast('Merged: ' + added + ' new + ' + updated + ' updated shortcuts', 'success');
+        return { added: added, updated: updated };
     },
 
     /* Replace all local data with Gist data (for new device restore) */
@@ -1904,7 +1990,7 @@ var app = {
         /* Check for Gist ID in URL hash (for cross-device restore) */
         var hash = window.location.hash;
         if (hash && hash.startsWith('#gist=')) {
-            var gistIdFromUrl = hash.substring(6);
+            var gistIdFromUrl = gistSync._extractGistId(hash.substring(6));
             if (gistIdFromUrl) {
                 /* Pre-fill both welcome screen and connect modal */
                 var welcId = document.getElementById('welcome-gist-id');
@@ -1931,28 +2017,89 @@ var app = {
 
     restoreFromWelcome: async function() {
         var token = document.getElementById('welcome-gist-token').value.trim();
-        var gistId = document.getElementById('welcome-gist-id').value.trim();
-        if (!token) { ui.toast('Please enter your GitHub token', 'error'); return; }
-        if (!gistId) { ui.toast('Please enter your Gist ID', 'error'); return; }
-        /* Save Gist credentials */
-        gistSync.token = token;
-        gistSync.gistId = gistId;
-        gistSync._saveCredentials();
-        document.getElementById('welcome-screen').classList.add('hidden');
-        /* Initialize with default empty data first */
-        aiGiant.data = JSON.parse(JSON.stringify(aiGiant.DEFAULT_DATA));
-        aiGiant.render();
-        gistSync.updateUI();
-        /* Pull from Gist and REPLACE local data (new device gets fresh copy from cloud) */
-        ui.toast('Restoring your data from GitHub Gist...', 'success');
+        var gistIdRaw = document.getElementById('welcome-gist-id').value.trim();
+        var gistId = gistSync._extractGistId(gistIdRaw);
+        var errEl = document.getElementById('welcome-restore-error');
+        var loadingEl = document.getElementById('welcome-restore-loading');
+        var restoreBtn = document.getElementById('welcome-restore-btn');
+
+        if (!token) {
+            if (errEl) { errEl.textContent = 'Please enter your GitHub Personal Access Token.'; errEl.style.display = 'block'; }
+            return;
+        }
+        if (!gistId) {
+            if (errEl) { errEl.textContent = 'Please enter your Gist ID (or paste the Gist URL from your other device).'; errEl.style.display = 'block'; }
+            return;
+        }
+
+        /* Update the field with cleaned Gist ID */
+        if (gistId !== gistIdRaw && gistId) {
+            document.getElementById('welcome-gist-id').value = gistId;
+        }
+
+        /* Show loading state */
+        if (errEl) errEl.style.display = 'none';
+        if (loadingEl) loadingEl.style.display = 'block';
+        if (restoreBtn) { restoreBtn.disabled = true; restoreBtn.innerHTML = '<span class="sync-spinner"></span> Connecting...'; }
+
         try {
-            var count = await gistSync.loadAndReplace();
+            /* Step 1: Validate credentials by reading the Gist */
+            var res = await fetch('https://api.github.com/gists/' + gistId, {
+                headers: Object.assign({}, gistSync._authHeader(token), { 'Accept': 'application/vnd.github.v3+json' })
+            });
+            if (!res.ok) {
+                var errData = {};
+                try { errData = await res.json(); } catch(e2) {}
+                if (res.status === 401) throw new Error('Invalid GitHub token. Make sure it has the "gist" scope enabled.');
+                if (res.status === 404) throw new Error('Gist not found. Check the Gist ID — make sure you copied it correctly.');
+                throw new Error(errData.message || 'Could not access Gist (HTTP ' + res.status + ')');
+            }
+
+            /* Step 2: Parse the Gist data */
+            var gistData = await res.json();
+            var file = gistData.files && gistData.files['ai-giant-data.json'];
+            if (!file || !file.content) throw new Error('This Gist exists but has no AI Giant data. Did you use the correct Gist ID?');
+            var parsed = JSON.parse(file.content);
+            if (!parsed.shortcuts || !Array.isArray(parsed.shortcuts)) throw new Error('Invalid data format in Gist');
+
+            /* Step 3: Credentials are valid — save them */
+            gistSync.token = token;
+            gistSync.gistId = gistId;
             gistSync.lastSyncAt = new Date().toISOString();
             gistSync._saveCredentials();
-            ui.toast('Data restored! ' + count + ' shortcuts loaded. Welcome back!', 'success');
-        } catch(e) {
-            ui.toast('Restore failed: ' + e.message, 'error');
-            ui.toast('Check your token and Gist ID, then try Connect Gist in toolbar.', 'warning');
+
+            /* Step 4: Hide welcome screen and load data */
+            document.getElementById('welcome-screen').classList.add('hidden');
+            /* Suppress auto-sync during data replacement to prevent pushing before data is ready */
+            gistSync._suppressAutoSync = true;
+            aiGiant.data = JSON.parse(JSON.stringify(aiGiant.DEFAULT_DATA));
+            aiGiant.render();
+            gistSync.updateUI();
+
+            /* Step 5: Replace local data with Gist data */
+            aiGiant.replaceData(parsed);
+            gistSync._suppressAutoSync = false;
+
+            /* Step 6: Push the restored data to Gist to ensure it's up to date */
+            await gistSync._saveToGist();
+            gistSync.lastSyncAt = new Date().toISOString();
+            gistSync._saveCredentials();
+            gistSync.updateUI();
+
+            ui.toast('Data restored! ' + parsed.shortcuts.length + ' shortcuts loaded. Welcome back!', 'success');
+
+        } catch (e) {
+            /* If welcome screen is already hidden, show toast instead of inline error */
+            var welcomeEl = document.getElementById('welcome-screen');
+            if (welcomeEl && welcomeEl.classList.contains('hidden')) {
+                ui.toast('Sync error: ' + e.message, 'error');
+            } else if (errEl) {
+                errEl.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> ' + gistSync._escHtml(e.message);
+                errEl.style.display = 'block';
+            }
+        } finally {
+            if (loadingEl) loadingEl.style.display = 'none';
+            if (restoreBtn) { restoreBtn.disabled = false; restoreBtn.innerHTML = '<i class="fa-solid fa-cloud-arrow-down"></i> Restore My Data'; }
         }
     },
 
