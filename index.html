@@ -654,6 +654,7 @@ let state = {
   groups: [],
   apiKeys: {},
   history: [],
+  deletedItems: [],   // tracks deletions for cross-device sync: [{type,key,deletedAt}]
   gistToken: '',
   gistId: '',
   passphrase: '',
@@ -959,6 +960,10 @@ function saveShortcut() {
     showToast('Shortcut updated ✓', 'success');
   } else {
     state.shortcuts.push(sc);
+    // Clear any previous deletion record for this URL (re-adding a deleted shortcut)
+    if (state.deletedItems) {
+      state.deletedItems = state.deletedItems.filter(d => !(d.type === 'shortcut' && d.key === url));
+    }
     showToast('Shortcut added ✓', 'success');
   }
   saveState();
@@ -970,6 +975,11 @@ function saveShortcut() {
 function deleteShortcut(id, e) {
   if(e) e.stopPropagation();
   if (!confirm('Delete this shortcut?')) return;
+  // Record deletion for cross-device sync
+  const s = state.shortcuts.find(x=>x.id===id);
+  if (s) {
+    recordDeletion('shortcut', s.url);
+  }
   state.shortcuts = state.shortcuts.filter(x=>x.id!==id);
   saveState();
   autoSync();
@@ -1026,8 +1036,13 @@ function addGroup() {
   if (!val) return;
   if (state.groups.includes(val)) { showToast('Group already exists', 'error'); return; }
   state.groups.push(val);
+  // Clear any previous deletion record for this group (re-adding a deleted group)
+  if (state.deletedItems) {
+    state.deletedItems = state.deletedItems.filter(d => !(d.type === 'group' && d.key === val));
+  }
   document.getElementById('new-group-input').value = '';
   saveState();
+  autoSync();
   renderGroupsList();
   renderGroupsBar();
   updateGroupsDatalist();
@@ -1036,10 +1051,12 @@ function addGroup() {
 
 function deleteGroup(g) {
   if (!confirm(`Delete group "${g}"? Shortcuts in this group won't be deleted.`)) return;
+  recordDeletion('group', g);
   state.groups = state.groups.filter(x=>x!==g);
   state.shortcuts.forEach(s => { if(s.group===g) s.group=''; });
   if (state.activeGroup===g) state.activeGroup = 'All';
   saveState();
+  autoSync();
   renderGroupsList();
   renderAll();
 }
@@ -1217,28 +1234,89 @@ function gistPayload() {
     groups: state.groups,
     apiKeys: state.apiKeys,
     history: state.history,
+    deletedItems: state.deletedItems || [],
     _updatedAt: new Date().toISOString()
   };
+}
+
+// Record a deletion for cross-device sync propagation
+function recordDeletion(type, key) {
+  if (!state.deletedItems) state.deletedItems = [];
+  // Remove any previous deletion record for the same item (avoid duplicates)
+  state.deletedItems = state.deletedItems.filter(d => !(d.type === type && d.key === key));
+  state.deletedItems.push({ type, key, deletedAt: new Date().toISOString() });
+  // Clean up deletion records older than 90 days
+  const cutoff = Date.now() - 90 * 24 * 60 * 60 * 1000;
+  state.deletedItems = state.deletedItems.filter(d => new Date(d.deletedAt).getTime() > cutoff);
 }
 
 // MERGE remote data into local (doesn't destroy local data)
 function mergeGistData(data) {
   if (!data) return { added: 0, updated: 0 };
-  let added = 0, updated = 0;
+  let added = 0, updated = 0, removed = 0;
 
-  // Merge groups — add missing ones
+  if (!state.deletedItems) state.deletedItems = [];
+
+  // Step 0: Apply remote deletions to local data
+  if (data.deletedItems && data.deletedItems.length > 0) {
+    const remoteDeletedShortcuts = new Set();
+    const remoteDeletedGroups = new Set();
+    data.deletedItems.forEach(d => {
+      if (d.type === 'shortcut') remoteDeletedShortcuts.add(d.key);
+      else if (d.type === 'group') remoteDeletedGroups.add(d.key);
+    });
+    // Remove locally any shortcuts that were deleted on the remote device
+    const beforeLen = state.shortcuts.length;
+    state.shortcuts = state.shortcuts.filter(s => !remoteDeletedShortcuts.has(s.url));
+    removed += beforeLen - state.shortcuts.length;
+    // Remove locally any groups that were deleted on the remote device
+    const beforeGroups = state.groups.length;
+    state.groups = state.groups.filter(g => !remoteDeletedGroups.has(g));
+    removed += beforeGroups - state.groups.length;
+  }
+
+  // Merge groups — add missing ones (unless locally deleted and deletion is newer)
   if (data.groups) {
+    const localDeletedGroupTimes = {};
+    (state.deletedItems || []).filter(d => d.type === 'group').forEach(d => {
+      localDeletedGroupTimes[d.key] = d.deletedAt;
+    });
     data.groups.forEach(g => {
-      if (!state.groups.includes(g)) state.groups.push(g);
+      const delTime = localDeletedGroupTimes[g];
+      if (!state.groups.includes(g)) {
+        // Only add if not locally deleted, or if we can't compare timestamps
+        if (!delTime) {
+          state.groups.push(g);
+          added++;
+        }
+        // If group was deleted locally but remote still has it, respect the local deletion
+      }
+      // If group exists in remote and local deletion exists, but the group was re-added
+      // on another device (it appears in remote shortcuts), clear deletion record
+      // For groups, we check if the remote data includes it - if so, someone wanted it back
     });
   }
 
-  // Merge shortcuts — add new, update if remote is newer
+  // Merge shortcuts — add new, update if remote is newer (skip if locally deleted and deletion is newer)
   if (data.shortcuts) {
+    const localDeletionMap = {};
+    (state.deletedItems || []).filter(d => d.type === 'shortcut').forEach(d => {
+      localDeletionMap[d.key] = d.deletedAt;
+    });
     const localByUrl = {};
     state.shortcuts.forEach(s => { localByUrl[s.url] = s; });
 
     data.shortcuts.forEach(remote => {
+      const localDeletionTime = localDeletionMap[remote.url];
+      // Skip if locally deleted AND deletion is newer than remote's updatedAt
+      if (localDeletionTime && (!remote.updatedAt || new Date(localDeletionTime) > new Date(remote.updatedAt))) {
+        return;
+      }
+      // If remote shortcut is newer than the deletion, clear the deletion record (shortcut was re-added)
+      if (localDeletionTime && remote.updatedAt && new Date(remote.updatedAt) > new Date(localDeletionTime)) {
+        state.deletedItems = (state.deletedItems || []).filter(d => !(d.type === 'shortcut' && d.key === remote.url));
+      }
+
       const local = localByUrl[remote.url];
       if (!local) {
         state.shortcuts.push({ ...remote });
@@ -1270,7 +1348,25 @@ function mergeGistData(data) {
     if (state.history.length > 50) state.history = state.history.slice(0, 50);
   }
 
-  return { added, updated };
+  // Merge deletedItems — combine from both sides, keeping the latest deletion for each item
+  if (data.deletedItems && data.deletedItems.length > 0) {
+    const merged = new Map();
+    // Add local deletions
+    (state.deletedItems || []).forEach(d => merged.set(d.type + ':' + d.key, d));
+    // Add/overwrite with remote deletions (keep whichever is newer)
+    data.deletedItems.forEach(d => {
+      const existing = merged.get(d.type + ':' + d.key);
+      if (!existing || new Date(d.deletedAt) > new Date(existing.deletedAt)) {
+        merged.set(d.type + ':' + d.key, d);
+      }
+    });
+    state.deletedItems = Array.from(merged.values());
+    // Clean up old entries
+    const cutoff = Date.now() - 90 * 24 * 60 * 60 * 1000;
+    state.deletedItems = state.deletedItems.filter(d => new Date(d.deletedAt).getTime() > cutoff);
+  }
+
+  return { added, updated, removed };
 }
 
 // Replace local data with Gist data (for new device restore)
@@ -1279,6 +1375,7 @@ function applyGistData(data, token, id) {
   if (data.groups) state.groups = data.groups;
   if (data.apiKeys) state.apiKeys = data.apiKeys;
   if (data.history) state.history = data.history;
+  if (data.deletedItems) state.deletedItems = data.deletedItems;
   state.gistToken = token;
   state.gistId = id;
 }
@@ -1308,8 +1405,11 @@ async function doSync(silent = false) {
 
     renderAll();
     if (!silent) {
-      if (mergeResult.added > 0) showToast(`Synced! ${mergeResult.added} new + ${mergeResult.updated} updated from Gist ✓`, 'success');
-      else if (mergeResult.updated > 0) showToast(`Synced! ${mergeResult.updated} updated from Gist ✓`, 'success');
+      const parts = [];
+      if (mergeResult.added > 0) parts.push(mergeResult.added + ' new');
+      if (mergeResult.updated > 0) parts.push(mergeResult.updated + ' updated');
+      if (mergeResult.removed > 0) parts.push(mergeResult.removed + ' deleted');
+      if (parts.length > 0) showToast(`Synced! ${parts.join(', ')} from Gist ✓`, 'success');
       else showToast('Synced! Your data is up to date ✓', 'success');
     }
   } catch(e) {
