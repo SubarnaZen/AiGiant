@@ -158,6 +158,12 @@
 
         .hidden { display:none !important; }
 
+        /* Sync spinner */
+        .sync-spinner { display:inline-block; width:12px; height:12px; border:2px solid rgba(255,255,255,.2); border-top-color:var(--accent); border-radius:50%; animation:spin .6s linear infinite; vertical-align:middle; margin-right:4px; }
+        @keyframes spin { to { transform:rotate(360deg); } }
+        .sync-status.syncing { border-color:rgba(59,130,246,.4); color:var(--accent); }
+        .sync-status.error { border-color:rgba(239,68,68,.4); color:var(--danger); background:rgba(239,68,68,.08); }
+
         /* Privacy Lock Screen */
         .lock-screen { position:fixed; top:0; left:0; width:100%; height:100%; background:var(--bg-app); z-index:9999; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:20px; }
         .lock-screen.hidden { display:none !important; }
@@ -258,7 +264,7 @@
     <button class="btn-primary" onclick="aiGiant.openAddModal()"><i class="fa-solid fa-plus"></i> Add</button>
     <button class="btn-icon" onclick="aiGiant.openGroupsModal()" style="border:1px solid var(--border);padding:5px 10px;border-radius:4px;font-size:11px;"><i class="fa-solid fa-folder-gear"></i> Groups</button>
     <button class="btn-icon" onclick="aiGiant.openApiKeysModal()" style="border:1px solid var(--border);padding:5px 10px;border-radius:4px;font-size:11px;"><i class="fa-solid fa-key"></i> Keys</button>
-    <button class="btn-icon" onclick="gistSync.connect()" style="border:1px solid var(--border);padding:5px 10px;border-radius:4px;font-size:11px;" id="gist-connect-btn"><i class="fa-brands fa-github"></i> Connect Gist</button>
+    <button class="btn-icon" onclick="gistSync.showConnectModal()" style="border:1px solid var(--border);padding:5px 10px;border-radius:4px;font-size:11px;" id="gist-connect-btn"><i class="fa-brands fa-github"></i> Connect Gist</button>
     <button class="btn-icon hidden" onclick="gistSync.syncNow()" style="border:1px solid var(--border);padding:5px 10px;border-radius:4px;font-size:11px;" id="gist-sync-btn"><i class="fa-solid fa-rotate"></i> Sync Now</button>
     <button class="btn-icon hidden" onclick="gistSync.copySyncLink()" style="border:1px solid rgba(16,185,129,.3);padding:5px 10px;border-radius:4px;font-size:11px;color:var(--success);" id="gist-copy-link-btn" title="Copy link for other devices"><i class="fa-solid fa-share-nodes"></i> Share Link</button>
     <div style="margin-left:auto;display:flex;align-items:center;gap:6px;">
@@ -377,24 +383,25 @@
         </div>
         <div class="modal-body">
             <div style="background:var(--bg-app);border:1px solid var(--border);border-radius:7px;padding:13px;margin-bottom:16px;">
-                <div style="font-size:12px;font-weight:700;margin-bottom:8px;"><i class="fa-brands fa-github" style="color:var(--accent);"></i> GitHub Gist Sync <span style="font-weight:400;color:var(--text-muted);font-size:10px;">(free, no credit card)</span></div>
+                <div style="font-size:12px;font-weight:700;margin-bottom:8px;"><i class="fa-brands fa-github" style="color:var(--accent);"></i> GitHub Gist Sync <span style="font-weight:400;color:var(--text-muted);font-size:10px;">(free, syncs across devices)</span></div>
+                <div id="gist-settings-status" style="margin-bottom:10px;"></div>
                 <div class="form-group">
                     <label class="form-label">GitHub Personal Access Token (Classic)</label>
                     <input type="password" class="form-input" id="gist-token" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Gist ID <span style="font-weight:400;color:var(--text-muted);">(leave empty to auto-create)</span></label>
+                    <label class="form-label">Gist ID</label>
                     <div style="display:flex;gap:6px;">
                         <input type="text" class="form-input" id="gist-id" placeholder="abc123def456..." style="flex:1;">
                         <button class="btn-icon" style="border:1px solid var(--border);padding:5px 10px;border-radius:4px;font-size:11px;white-space:nowrap;" onclick="gistSync.copySyncLink()" title="Copy sync link for other devices"><i class="fa-solid fa-share-nodes"></i> Copy Link</button>
                     </div>
                 </div>
-                <div style="font-size:10px;color:var(--text-muted);line-height:1.4;margin-top:4px;">
-                    <strong style="color:var(--text-main);">How to set up cross-device sync:</strong><br>
-                    1. Go to GitHub &rarr; Settings &rarr; Developer settings &rarr; Personal access tokens &rarr; <strong>Tokens (classic)</strong><br>
-                    2. Generate new token &rarr; check <strong>gist</strong> scope only &rarr; copy token<br>
-                    3. Paste above &rarr; click <strong>Save</strong> &rarr; click <strong>Connect Gist</strong> in toolbar<br>
-                    4. On other devices, click <strong>Share Link</strong> button and open the link — or enter the same Token + Gist ID in the welcome screen
+                <div style="display:flex;gap:8px;margin-top:8px;">
+                    <button class="btn-primary" style="flex:1;" onclick="ui.hideSettings(); gistSync.showConnectModal();"><i class="fa-solid fa-plug"></i> Connect Gist</button>
+                    <button class="btn-primary" style="flex:1;background:var(--success);" onclick="ui.hideSettings(); gistSync.syncNow();"><i class="fa-solid fa-rotate"></i> Sync Now</button>
+                </div>
+                <div style="font-size:10px;color:var(--text-muted);line-height:1.4;margin-top:10px;">
+                    <strong style="color:var(--text-main);">Setup:</strong> GitHub → Settings → Developer settings → Tokens (classic) → check <strong>gist</strong> scope → paste above → Save → Connect Gist
                 </div>
             </div>
             <div class="form-group">
@@ -421,6 +428,37 @@
                 </div>
             </div>
             <button class="btn-primary" style="width:100%;margin-top:6px;" onclick="app.saveSettings()"><i class="fa-solid fa-floppy-disk"></i> Save Configuration</button>
+        </div>
+    </div>
+</div>
+
+<!-- GIST CONNECT MODAL -->
+<div class="modal-overlay" id="gist-connect-modal">
+    <div class="modal" style="width:460px;">
+        <div class="modal-header">
+            <span><i class="fa-brands fa-github" style="color:var(--accent);"></i> Connect GitHub Gist</span>
+            <i class="fa-solid fa-xmark close-btn" onclick="ui.hideModal('gist-connect-modal')"></i>
+        </div>
+        <div class="modal-body">
+            <div style="font-size:11px;color:var(--text-muted);line-height:1.5;margin-bottom:14px;">
+                Sync your shortcuts across all devices using a free GitHub Gist. Your data stays private in a secret Gist.
+            </div>
+            <div class="form-group">
+                <label class="form-label"><i class="fa-brands fa-github" style="color:var(--accent);"></i> GitHub Personal Access Token (Classic) *</label>
+                <input type="password" class="form-input" id="connect-gist-token" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
+                <div style="font-size:10px;color:var(--text-muted);margin-top:4px;">
+                    GitHub → Settings → Developer settings → <strong>Tokens (classic)</strong> → check <strong>gist</strong> scope
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Gist ID <span style="font-weight:400;color:var(--text-muted);">(leave empty to auto-create new)</span></label>
+                <input type="text" class="form-input" id="connect-gist-id" placeholder="Paste Gist ID from another device...">
+            </div>
+            <div id="gist-connect-error" style="color:var(--danger);font-size:11px;display:none;margin-bottom:10px;"></div>
+            <div style="display:flex;gap:9px;margin-top:14px;">
+                <button class="btn-primary" style="flex:1;" id="gist-connect-submit" onclick="gistSync.connectFromModal()"><i class="fa-solid fa-plug"></i> Connect & Sync</button>
+                <button class="btn-icon" style="border:1px solid var(--border);padding:5px 14px;border-radius:4px;" onclick="ui.hideModal('gist-connect-modal')">Cancel</button>
+            </div>
         </div>
     </div>
 </div>
@@ -562,7 +600,8 @@ function toggleTheme() {
 
 /* ===== GITHUB GIST SYNC ===== */
 var gistSync = {
-    token: '', gistId: '', _syncDebounce: null, lastSyncAt: null, _isLoading: false,
+    token: '', gistId: '', _syncDebounce: null, lastSyncAt: null,
+    _isLoading: false, _isSaving: false, _suppressAutoSync: false,
 
     init: function() {
         var saved = localStorage.getItem('aig_gist');
@@ -577,12 +616,56 @@ var gistSync = {
         this.updateUI();
     },
 
-    connect: async function() {
-        var token = document.getElementById('gist-token').value.trim() || this.token || state.settings.gistToken;
-        var gistId = document.getElementById('gist-id').value.trim() || this.gistId || state.settings.gistId;
-        if (!token) { ui.toast('Enter GitHub Personal Access Token in Settings first', 'warning'); ui.showSettings(); return; }
+    /* Called when user clicks "Connect Gist" button in toolbar */
+    showConnectModal: function() {
+        if (this.token && this.gistId) {
+            /* Already connected — show disconnect option */
+            if (confirm('You are connected to Gist ' + this.gistId + '.\n\nClick OK to disconnect, or Cancel to close.')) {
+                this.disconnect();
+            }
+            return;
+        }
+        /* Pre-fill from settings if available */
+        var tokenField = document.getElementById('connect-gist-token');
+        var idField = document.getElementById('connect-gist-id');
+        tokenField.value = state.settings.gistToken || '';
+        idField.value = state.settings.gistId || '';
+        /* Also check URL hash */
+        var hash = window.location.hash;
+        if (hash && hash.startsWith('#gist=')) {
+            idField.value = hash.substring(6);
+            history.replaceState(null, '', window.location.pathname);
+        }
+        var errEl = document.getElementById('gist-connect-error');
+        if (errEl) errEl.style.display = 'none';
+        document.getElementById('gist-connect-modal').style.display = 'flex';
+        setTimeout(function() { tokenField.focus(); }, 150);
+    },
+
+    /* Called from the Connect Modal form */
+    connectFromModal: async function() {
+        var token = document.getElementById('connect-gist-token').value.trim();
+        var gistId = document.getElementById('connect-gist-id').value.trim();
+        var errEl = document.getElementById('gist-connect-error');
+        var submitBtn = document.getElementById('gist-connect-submit');
+
+        if (!token) {
+            errEl.textContent = 'Please enter your GitHub Personal Access Token.';
+            errEl.style.display = 'block';
+            return;
+        }
+        if (!gistId && !confirm('No Gist ID entered. A new secret Gist will be created with your current data. Continue?')) {
+            return;
+        }
+
+        /* Show loading */
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="sync-spinner"></span> Connecting...';
+        errEl.style.display = 'none';
+
         try {
             if (!gistId) {
+                /* Create new Gist */
                 var res = await fetch('https://api.github.com/gists', {
                     method: 'POST',
                     headers: { 'Authorization': 'token ' + token, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' },
@@ -591,11 +674,10 @@ var gistSync = {
                     })
                 });
                 var data = await res.json();
-                if (!res.ok) throw new Error(data.message || 'Failed to create Gist');
+                if (!res.ok) throw new Error(data.message || 'Failed to create Gist (HTTP ' + res.status + ')');
                 gistId = data.id;
-                document.getElementById('gist-id').value = gistId;
-                ui.toast('Created new secret Gist! ID: ' + gistId + ' — save this ID for other devices!', 'success');
             } else {
+                /* Verify existing Gist */
                 var res2 = await fetch('https://api.github.com/gists/' + gistId, {
                     headers: { 'Authorization': 'token ' + token, 'Accept': 'application/vnd.github.v3+json' }
                 });
@@ -603,35 +685,56 @@ var gistSync = {
                     var errData = {};
                     try { errData = await res2.json(); } catch(e2) {}
                     if (res2.status === 401) throw new Error('Invalid GitHub token. Make sure it has the "gist" scope.');
-                    if (res2.status === 404) throw new Error('Gist not found. Check the Gist ID and make sure the token has access.');
-                    throw new Error(errData.message || 'Could not access Gist. Check Token and Gist ID.');
+                    if (res2.status === 404) throw new Error('Gist not found. Check the Gist ID and make sure your token has access.');
+                    throw new Error(errData.message || 'Could not access Gist (HTTP ' + res2.status + ')');
                 }
             }
+
+            /* Save credentials */
             this.token = token;
             this.gistId = gistId;
-            this.saveState();
+            this.lastSyncAt = new Date().toISOString();
+            this._saveCredentials();
             this.updateUI();
-            ui.toast('GitHub Gist connected!', 'success');
-            await this.syncNow();
-            /* Update settings fields with connection info */
-            document.getElementById('gist-token').value = this.token;
-            document.getElementById('gist-id').value = this.gistId;
-            state.settings.gistToken = this.token;
-            state.settings.gistId = this.gistId;
-            localStorage.setItem('aig_settings', JSON.stringify(state.settings));
-        } catch (e) { ui.toast(e.message, 'error'); }
+            ui.hideModal('gist-connect-modal');
+
+            /* If Gist has data, load it (merge with local) */
+            ui.toast('Connected! Syncing data...', 'success');
+            await this._doSync();
+
+        } catch (e) {
+            errEl.textContent = e.message;
+            errEl.style.display = 'block';
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fa-solid fa-plug"></i> Connect & Sync';
+        }
     },
 
     disconnect: function() {
         this.token = '';
         this.gistId = '';
-        this.saveState();
+        this.lastSyncAt = null;
+        this._saveCredentials();
+        /* Also clear from settings */
+        state.settings.gistToken = '';
+        state.settings.gistId = '';
+        localStorage.setItem('aig_settings', JSON.stringify(state.settings));
         this.updateUI();
         ui.toast('Gist disconnected. Using local-only mode.', 'warning');
     },
 
-    saveState: function() {
+    /* Save credentials to localStorage AND state.settings */
+    _saveCredentials: function() {
         localStorage.setItem('aig_gist', JSON.stringify({ token: this.token, gistId: this.gistId, lastSyncAt: this.lastSyncAt }));
+        state.settings.gistToken = this.token;
+        state.settings.gistId = this.gistId;
+        localStorage.setItem('aig_settings', JSON.stringify(state.settings));
+        /* Also update settings modal fields */
+        var tokenEl = document.getElementById('gist-token');
+        var idEl = document.getElementById('gist-id');
+        if (tokenEl) tokenEl.value = this.token;
+        if (idEl) idEl.value = this.gistId;
     },
 
     updateUI: function() {
@@ -639,21 +742,38 @@ var gistSync = {
         var connectBtn = document.getElementById('gist-connect-btn');
         var syncBtn = document.getElementById('gist-sync-btn');
         var copyLinkBtn = document.getElementById('gist-copy-link-btn');
+
         if (this.token && this.gistId) {
             var timeStr = this.lastSyncAt ? ' · ' + this._timeAgoShort(this.lastSyncAt) : '';
             status.innerHTML = '<i class="fa-brands fa-github"></i> Synced' + timeStr;
             status.className = 'sync-status connected';
             connectBtn.innerHTML = '<i class="fa-solid fa-link-slash"></i> Disconnect';
-            connectBtn.onclick = function() { gistSync.disconnect(); };
+            connectBtn.onclick = function() { gistSync.showConnectModal(); };
             syncBtn.classList.remove('hidden');
             if (copyLinkBtn) copyLinkBtn.classList.remove('hidden');
         } else {
-            status.innerHTML = '<i class="fa-brands fa-github"></i> Gist: Not Connected';
+            status.innerHTML = '<i class="fa-brands fa-github"></i> Not Connected';
             status.className = 'sync-status';
             connectBtn.innerHTML = '<i class="fa-brands fa-github"></i> Connect Gist';
-            connectBtn.onclick = function() { gistSync.connect(); };
+            connectBtn.onclick = function() { gistSync.showConnectModal(); };
             syncBtn.classList.add('hidden');
             if (copyLinkBtn) copyLinkBtn.classList.add('hidden');
+        }
+    },
+
+    _setSyncingUI: function(syncing, errorMsg) {
+        var status = document.getElementById('sync-status');
+        if (!status) return;
+        if (syncing) {
+            status.innerHTML = '<span class="sync-spinner"></span> Syncing...';
+            status.className = 'sync-status syncing';
+        } else if (errorMsg) {
+            status.innerHTML = '<i class="fa-brands fa-github"></i> Error: ' + errorMsg;
+            status.className = 'sync-status error';
+        } else if (this.token && this.gistId) {
+            var timeStr = this.lastSyncAt ? ' · ' + this._timeAgoShort(this.lastSyncAt) : '';
+            status.innerHTML = '<i class="fa-brands fa-github"></i> Synced' + timeStr;
+            status.className = 'sync-status connected';
         }
     },
 
@@ -670,39 +790,131 @@ var gistSync = {
     copySyncLink: function() {
         if (!this.gistId) { ui.toast('Connect Gist first', 'warning'); return; }
         var link = window.location.origin + window.location.pathname + '#gist=' + this.gistId;
-        navigator.clipboard.writeText(link).then(function() {
-            ui.toast('Sync link copied! Share this link to restore on other devices.', 'success');
-        }).catch(function() {
-            /* Fallback */
-            var ta = document.createElement('textarea');
-            ta.value = link;
-            document.body.appendChild(ta);
-            ta.select();
-            document.execCommand('copy');
-            ta.remove();
-            ui.toast('Sync link copied! Share this link to restore on other devices.', 'success');
-        });
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(link).then(function() {
+                ui.toast('Sync link copied! Open this link on your other device.', 'success');
+            }).catch(function() { gistSync._fallbackCopy(link); });
+        } else {
+            this._fallbackCopy(link);
+        }
     },
 
+    _fallbackCopy: function(text) {
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.cssText = 'position:fixed;left:-9999px;';
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); ui.toast('Sync link copied! Open this link on your other device.', 'success'); }
+        catch(e) { ui.toast('Could not copy. Your sync link: ' + text, 'warning'); }
+        ta.remove();
+    },
+
+    /* ---- SYNC OPERATIONS ---- */
+
+    /* Full sync: load from Gist (merge), then save to Gist */
     syncNow: async function() {
-        if (!this.token || !this.gistId) return;
-        ui.toast('Syncing with GitHub Gist...', 'success');
+        if (!this.token || !this.gistId) {
+            ui.toast('Connect Gist first', 'warning');
+            this.showConnectModal();
+            return;
+        }
+        if (this._isLoading || this._isSaving) {
+            ui.toast('Sync already in progress...', 'warning');
+            return;
+        }
+        await this._doSync();
+    },
+
+    _doSync: async function() {
+        this._setSyncingUI(true);
         try {
-            await this.loadFromGist();
-            await this.saveToGist();
+            /* Step 1: Load and merge from Gist */
+            var loaded = await this._loadFromGist();
+            /* Step 2: Push merged data back to Gist */
+            await this._saveToGist();
             this.lastSyncAt = new Date().toISOString();
-            this.saveState();
-            this.updateUI();
-            ui.toast('Synced with GitHub Gist!', 'success');
+            this._saveCredentials();
+            this._setSyncingUI(false);
+            ui.toast('Synced! ' + (loaded ? loaded.shortcutCount + ' shortcuts merged.' : 'Up to date.'), 'success');
         } catch(e) {
+            this._setSyncingUI(false, e.message);
             ui.toast('Sync failed: ' + e.message, 'error');
         }
     },
 
-    saveToGist: async function() {
-        if (!this.token || !this.gistId) return;
-        var content = JSON.stringify(aiGiant.getExportData(), null, 2);
+    /* Load from Gist and merge — called during sync and auto-pull */
+    _loadFromGist: async function() {
+        if (!this.token || !this.gistId) return null;
+        if (this._isLoading) return null; /* Prevent concurrent loads */
+        this._isLoading = true;
+        this._suppressAutoSync = true; /* Prevent save() from triggering auto-push during load */
         try {
+            var res = await fetch('https://api.github.com/gists/' + this.gistId, {
+                headers: { 'Authorization': 'token ' + this.token, 'Accept': 'application/vnd.github.v3+json' }
+            });
+            if (!res.ok) {
+                var errData = {};
+                try { errData = await res.json(); } catch(e2) {}
+                if (res.status === 401) throw new Error('Invalid token');
+                if (res.status === 404) throw new Error('Gist not found');
+                throw new Error(errData.message || 'Load failed (HTTP ' + res.status + ')');
+            }
+            var data = await res.json();
+            var file = data.files && data.files['ai-giant-data.json'];
+            if (!file || !file.content) throw new Error('No data in Gist');
+            var parsed = JSON.parse(file.content);
+            if (!parsed.shortcuts || !Array.isArray(parsed.shortcuts)) throw new Error('Invalid data format in Gist');
+
+            /* Merge remote data into local */
+            aiGiant.mergeImportData(parsed, true);
+            return { shortcutCount: parsed.shortcuts.length };
+        } catch (e) {
+            throw e;
+        } finally {
+            this._isLoading = false;
+            this._suppressAutoSync = false;
+        }
+    },
+
+    /* Load from Gist and REPLACE local data — called for new device restore */
+    loadAndReplace: async function() {
+        if (!this.token || !this.gistId) throw new Error('Not connected');
+        if (this._isLoading) throw new Error('Load already in progress');
+        this._isLoading = true;
+        this._suppressAutoSync = true;
+        try {
+            var res = await fetch('https://api.github.com/gists/' + this.gistId, {
+                headers: { 'Authorization': 'token ' + this.token, 'Accept': 'application/vnd.github.v3+json' }
+            });
+            if (!res.ok) {
+                var errData = {};
+                try { errData = await res.json(); } catch(e2) {}
+                if (res.status === 401) throw new Error('Invalid token. Make sure it has "gist" scope.');
+                if (res.status === 404) throw new Error('Gist not found. Check the Gist ID.');
+                throw new Error(errData.message || 'Load failed (HTTP ' + res.status + ')');
+            }
+            var data = await res.json();
+            var file = data.files && data.files['ai-giant-data.json'];
+            if (!file || !file.content) throw new Error('No data found in this Gist');
+            var parsed = JSON.parse(file.content);
+            if (!parsed.shortcuts || !Array.isArray(parsed.shortcuts)) throw new Error('Invalid data format in Gist');
+
+            aiGiant.replaceData(parsed);
+            return parsed.shortcuts.length;
+        } finally {
+            this._isLoading = false;
+            this._suppressAutoSync = false;
+        }
+    },
+
+    /* Save current data to Gist */
+    _saveToGist: async function() {
+        if (!this.token || !this.gistId) return;
+        if (this._isSaving) return;
+        this._isSaving = true;
+        try {
+            var content = JSON.stringify(aiGiant.getExportData(), null, 2);
             var res = await fetch('https://api.github.com/gists/' + this.gistId, {
                 method: 'PATCH',
                 headers: { 'Authorization': 'token ' + this.token, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' },
@@ -711,52 +923,44 @@ var gistSync = {
             if (!res.ok) {
                 var errData = {};
                 try { errData = await res.json(); } catch(e2) {}
-                throw new Error(errData.message || 'Gist save failed (HTTP ' + res.status + ')');
+                if (res.status === 401) throw new Error('Token expired or invalid');
+                throw new Error(errData.message || 'Save failed (HTTP ' + res.status + ')');
             }
             this.lastSyncAt = new Date().toISOString();
-            this.saveState();
-        } catch (e) { ui.toast('Gist save failed: ' + e.message, 'error'); throw e; }
-    },
-
-    loadFromGist: async function(mode) {
-        if (!this.token || !this.gistId) return;
-        if (this._isLoading) return; /* Prevent duplicate concurrent loads */
-        this._isLoading = true;
-        try {
-            var res = await fetch('https://api.github.com/gists/' + this.gistId, {
-                headers: { 'Authorization': 'token ' + this.token, 'Accept': 'application/vnd.github.v3+json' }
-            });
-            if (!res.ok) {
-                var errData = {};
-                try { errData = await res.json(); } catch(e2) {}
-                if (res.status === 401) throw new Error('Invalid token. Make sure it has the "gist" scope.');
-                if (res.status === 404) throw new Error('Gist not found. Check the Gist ID.');
-                throw new Error(errData.message || 'Gist load failed (HTTP ' + res.status + ')');
-            }
-            var data = await res.json();
-            var file = data.files['ai-giant-data.json'];
-            if (file && file.content) {
-                var parsed = JSON.parse(file.content);
-                if (mode === 'replace') {
-                    aiGiant.replaceData(parsed);
-                } else {
-                    aiGiant.mergeImportData(parsed, true);
-                }
-            } else {
-                throw new Error('No data file found in Gist. Make sure this is the right Gist ID.');
-            }
-        } catch (e) {
-            console.warn('Gist load failed:', e);
-            throw e; /* Re-throw so callers can handle */
+            this._saveCredentials();
         } finally {
-            this._isLoading = false;
+            this._isSaving = false;
         }
     },
 
+    /* Auto-sync: debounced save triggered by local data changes */
     requestAutoSync: function() {
         if (!this.token || !this.gistId) return;
+        if (this._suppressAutoSync) return; /* Don't auto-push during Gist load */
+        if (this._isSaving) return;
         clearTimeout(this._syncDebounce);
-        this._syncDebounce = setTimeout(function() { gistSync.saveToGist(); }, 1500);
+        this._syncDebounce = setTimeout(function() {
+            gistSync._saveToGist().then(function() {
+                gistSync.updateUI();
+            }).catch(function(e) {
+                gistSync._setSyncingUI(false, e.message);
+            });
+        }, 2000);
+    },
+
+    /* Auto-pull on page load — just load and merge, no push */
+    autoPull: function() {
+        if (!this.token || !this.gistId) return;
+        this._loadFromGist().then(function(result) {
+            if (result) {
+                gistSync.lastSyncAt = new Date().toISOString();
+                gistSync._saveCredentials();
+                gistSync.updateUI();
+            }
+        }).catch(function(e) {
+            console.warn('Auto-pull failed:', e.message);
+            /* Don't show error toast for auto-pull — too annoying on page load */
+        });
     }
 };
 
@@ -812,11 +1016,9 @@ var aiGiant = {
         if (!this.data.customProviders) this.data.customProviders = [];
         this.render();
         gistSync.init();
-        /* Auto-pull from Gist if connected (always sync on page open) */
+        /* Auto-pull from Gist if connected (merge remote changes into local) */
         if (gistSync.token && gistSync.gistId) {
-            gistSync.loadFromGist().catch(function(e) {
-                console.warn('Auto-sync failed:', e);
-            });
+            gistSync.autoPull();
         }
     },
 
@@ -969,7 +1171,7 @@ var aiGiant = {
                     '<p>Get started by adding shortcuts or restoring from the cloud</p>' +
                     '<div class="restore-options">' +
                     '<div class="restore-card" onclick="aiGiant.openAddModal()"><i class="fa-solid fa-plus"></i><div class="rc-title">Add Shortcut</div><div class="rc-desc">Manually add your first AI tool</div></div>' +
-                    '<div class="restore-card" onclick="gistSync.connect()"><i class="fa-brands fa-github"></i><div class="rc-title">Sync from Gist</div><div class="rc-desc">Restore from your GitHub Gist backup</div></div>' +
+                    '<div class="restore-card" onclick="gistSync.showConnectModal()"><i class="fa-brands fa-github"></i><div class="rc-title">Sync from Gist</div><div class="rc-desc">Restore from your GitHub Gist backup</div></div>' +
                     '<div class="restore-card" onclick="aiGiant.importSession()"><i class="fa-solid fa-file-import"></i><div class="rc-title">Import File</div><div class="rc-desc">Load from an exported session file</div></div>' +
                     '</div></div>';
             } else {
@@ -1506,20 +1708,14 @@ var aiGiant = {
             /* Restore Gist ID; token must be re-entered for security */
             if (parsed.sync.gistId) {
                 gistSync.gistId = parsed.sync.gistId;
-                gistSync.saveState();
+                gistSync._saveCredentials();
                 gistSync.updateUI();
-                document.getElementById('gist-id').value = parsed.sync.gistId;
-                state.settings.gistId = parsed.sync.gistId;
-                localStorage.setItem('aig_settings', JSON.stringify(state.settings));
             }
             /* Legacy: support old exports that included the token */
             if (parsed.sync.gistToken && parsed.sync.gistId) {
                 gistSync.token = parsed.sync.gistToken;
-                gistSync.saveState();
+                gistSync._saveCredentials();
                 gistSync.updateUI();
-                document.getElementById('gist-token').value = parsed.sync.gistToken;
-                state.settings.gistToken = parsed.sync.gistToken;
-                localStorage.setItem('aig_settings', JSON.stringify(state.settings));
             }
         }
         this.save();
@@ -1591,9 +1787,19 @@ var aiGiant = {
 var ui = {
     showSettings: function() {
         document.getElementById('settings-modal').style.display = 'flex';
-        document.getElementById('gist-token').value = state.settings.gistToken;
-        document.getElementById('gist-id').value = state.settings.gistId;
+        document.getElementById('gist-token').value = gistSync.token || state.settings.gistToken || '';
+        document.getElementById('gist-id').value = gistSync.gistId || state.settings.gistId || '';
         document.getElementById('custom-endpoint').value = state.settings.customEndpoint;
+        /* Show Gist connection status */
+        var statusDiv = document.getElementById('gist-settings-status');
+        if (statusDiv) {
+            if (gistSync.token && gistSync.gistId) {
+                var timeStr = gistSync.lastSyncAt ? new Date(gistSync.lastSyncAt).toLocaleString() : 'Never';
+                statusDiv.innerHTML = '<span class="privacy-indicator on"><i class="fa-solid fa-check"></i> Connected</span> <span style="font-size:10px;color:var(--text-muted);">Gist: ' + gistSync.gistId + ' · Last sync: ' + timeStr + '</span>';
+            } else {
+                statusDiv.innerHTML = '<span class="privacy-indicator off"><i class="fa-solid fa-lock-open"></i> Not Connected</span>';
+            }
+        }
     },
     hideSettings: function() {
         document.getElementById('settings-modal').style.display = 'none';
@@ -1624,7 +1830,11 @@ var app = {
         if (hash && hash.startsWith('#gist=')) {
             var gistIdFromUrl = hash.substring(6);
             if (gistIdFromUrl) {
-                document.getElementById('welcome-gist-id').value = gistIdFromUrl;
+                /* Pre-fill both welcome screen and connect modal */
+                var welcId = document.getElementById('welcome-gist-id');
+                var connId = document.getElementById('connect-gist-id');
+                if (welcId) welcId.value = gistIdFromUrl;
+                if (connId) connId.value = gistIdFromUrl;
                 /* Clear the hash so it doesn't re-trigger on refresh */
                 history.replaceState(null, '', window.location.pathname);
             }
@@ -1651,35 +1861,42 @@ var app = {
         /* Save Gist credentials */
         gistSync.token = token;
         gistSync.gistId = gistId;
-        gistSync.saveState();
-        /* Also save to settings fields */
-        state.settings.gistToken = token;
-        state.settings.gistId = gistId;
-        localStorage.setItem('aig_settings', JSON.stringify(state.settings));
+        gistSync._saveCredentials();
         document.getElementById('welcome-screen').classList.add('hidden');
-        /* Initialize with default data first */
+        /* Initialize with default empty data first */
         aiGiant.data = JSON.parse(JSON.stringify(aiGiant.DEFAULT_DATA));
         aiGiant.render();
         gistSync.updateUI();
-        /* Then pull from Gist using REPLACE mode (new device gets fresh copy) */
+        /* Pull from Gist and REPLACE local data (new device gets fresh copy from cloud) */
         ui.toast('Restoring your data from GitHub Gist...', 'success');
         try {
-            await gistSync.loadFromGist('replace');
+            var count = await gistSync.loadAndReplace();
             gistSync.lastSyncAt = new Date().toISOString();
-            gistSync.saveState();
-            ui.toast('Data restored successfully! Welcome back. ' + aiGiant.data.shortcuts.length + ' shortcuts loaded.', 'success');
+            gistSync._saveCredentials();
+            ui.toast('Data restored! ' + count + ' shortcuts loaded. Welcome back!', 'success');
         } catch(e) {
-            ui.toast('Could not restore from Gist: ' + e.message, 'error');
+            ui.toast('Restore failed: ' + e.message, 'error');
+            ui.toast('Check your token and Gist ID, then try Connect Gist in toolbar.', 'warning');
         }
     },
 
     saveSettings: function() {
-        state.settings.gistToken = document.getElementById('gist-token').value.trim();
-        state.settings.gistId = document.getElementById('gist-id').value.trim();
+        var newToken = document.getElementById('gist-token').value.trim();
+        var newGistId = document.getElementById('gist-id').value.trim();
+        state.settings.gistToken = newToken;
+        state.settings.gistId = newGistId;
         state.settings.customEndpoint = document.getElementById('custom-endpoint').value.trim();
         localStorage.setItem('aig_settings', JSON.stringify(state.settings));
         ui.hideSettings();
         ui.toast('Configuration saved', 'success');
+        /* If both token and Gist ID are provided, auto-connect */
+        if (newToken && newGistId && (newToken !== gistSync.token || newGistId !== gistSync.gistId)) {
+            gistSync.token = newToken;
+            gistSync.gistId = newGistId;
+            gistSync._saveCredentials();
+            gistSync.updateUI();
+            gistSync._doSync();
+        }
     }
 };
 
@@ -1687,7 +1904,7 @@ var app = {
 window.onload = function() { app.init(); };
 
 // Click outside modal to close
-var modalIds = ['add-shortcut-modal', 'groups-modal', 'api-keys-modal', 'session-import-modal', 'settings-modal'];
+var modalIds = ['add-shortcut-modal', 'groups-modal', 'api-keys-modal', 'session-import-modal', 'settings-modal', 'gist-connect-modal'];
 modalIds.forEach(function(id) {
     var el = document.getElementById(id);
     if (el) {
@@ -1708,6 +1925,7 @@ document.addEventListener('keydown', function(e) {
         aiGiant.closeApiKeysModal();
         ui.hideModal('session-import-modal');
         ui.hideModal('settings-modal');
+        ui.hideModal('gist-connect-modal');
         var hbox = document.getElementById('history-results');
         if (hbox) hbox.style.display = 'none';
     }
