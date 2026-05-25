@@ -385,23 +385,16 @@
             <div style="background:var(--bg-app);border:1px solid var(--border);border-radius:7px;padding:13px;margin-bottom:16px;">
                 <div style="font-size:12px;font-weight:700;margin-bottom:8px;"><i class="fa-brands fa-github" style="color:var(--accent);"></i> GitHub Gist Sync <span style="font-weight:400;color:var(--text-muted);font-size:10px;">(free, syncs across devices)</span></div>
                 <div id="gist-settings-status" style="margin-bottom:10px;"></div>
-                <div class="form-group">
-                    <label class="form-label">GitHub Personal Access Token (Classic)</label>
-                    <input type="password" class="form-input" id="gist-token" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Gist ID</label>
-                    <div style="display:flex;gap:6px;">
-                        <input type="text" class="form-input" id="gist-id" placeholder="abc123def456..." style="flex:1;">
-                        <button class="btn-icon" style="border:1px solid var(--border);padding:5px 10px;border-radius:4px;font-size:11px;white-space:nowrap;" onclick="gistSync.copySyncLink()" title="Copy sync link for other devices"><i class="fa-solid fa-share-nodes"></i> Copy Link</button>
-                    </div>
-                </div>
                 <div style="display:flex;gap:8px;margin-top:8px;">
-                    <button class="btn-primary" style="flex:1;" onclick="ui.hideSettings(); gistSync.showConnectModal();"><i class="fa-solid fa-plug"></i> Connect Gist</button>
+                    <button class="btn-primary" style="flex:1;" onclick="ui.hideSettings(); gistSync.showConnectModal();"><i class="fa-solid fa-plug"></i> Connect / Reconnect Gist</button>
                     <button class="btn-primary" style="flex:1;background:var(--success);" onclick="ui.hideSettings(); gistSync.syncNow();"><i class="fa-solid fa-rotate"></i> Sync Now</button>
                 </div>
+                <div style="display:flex;gap:8px;margin-top:8px;" id="gist-settings-actions" class="hidden">
+                    <button class="btn-icon" style="border:1px solid var(--border);padding:5px 10px;border-radius:4px;font-size:11px;white-space:nowrap;flex:1;" onclick="gistSync.copySyncLink()" title="Copy sync link for other devices"><i class="fa-solid fa-share-nodes"></i> Copy Link</button>
+                    <button class="btn-danger" style="flex:1;" onclick="gistSync.disconnect(); ui.showSettings();"><i class="fa-solid fa-link-slash"></i> Disconnect</button>
+                </div>
                 <div style="font-size:10px;color:var(--text-muted);line-height:1.4;margin-top:10px;">
-                    <strong style="color:var(--text-main);">Setup:</strong> GitHub → Settings → Developer settings → Tokens (classic) → check <strong>gist</strong> scope → paste above → Save → Connect Gist
+                    <strong style="color:var(--text-main);">Setup:</strong> GitHub → Settings → Developer settings → Tokens (classic) → check <strong>gist</strong> scope → Connect Gist button above
                 </div>
             </div>
             <div class="form-group">
@@ -440,6 +433,7 @@
             <i class="fa-solid fa-xmark close-btn" onclick="ui.hideModal('gist-connect-modal')"></i>
         </div>
         <div class="modal-body">
+            <div id="gist-connect-current-status" style="display:none;background:var(--bg-app);border:1px solid var(--border);border-radius:7px;padding:10px 13px;margin-bottom:14px;"></div>
             <div style="font-size:11px;color:var(--text-muted);line-height:1.5;margin-bottom:14px;">
                 Sync your shortcuts across all devices using a free GitHub Gist. Your data stays private in a secret Gist.
             </div>
@@ -455,8 +449,10 @@
                 <input type="text" class="form-input" id="connect-gist-id" placeholder="Paste Gist ID from another device...">
             </div>
             <div id="gist-connect-error" style="color:var(--danger);font-size:11px;display:none;margin-bottom:10px;"></div>
+            <div id="gist-connect-success" style="color:var(--success);font-size:11px;display:none;margin-bottom:10px;"></div>
             <div style="display:flex;gap:9px;margin-top:14px;">
                 <button class="btn-primary" style="flex:1;" id="gist-connect-submit" onclick="gistSync.connectFromModal()"><i class="fa-solid fa-plug"></i> Connect & Sync</button>
+                <button class="btn-danger" style="display:none;" id="gist-disconnect-btn" onclick="gistSync.disconnectFromModal()"><i class="fa-solid fa-link-slash"></i> Disconnect</button>
                 <button class="btn-icon" style="border:1px solid var(--border);padding:5px 14px;border-radius:4px;" onclick="ui.hideModal('gist-connect-modal')">Cancel</button>
             </div>
         </div>
@@ -616,30 +612,65 @@ var gistSync = {
         this.updateUI();
     },
 
-    /* Called when user clicks "Connect Gist" button in toolbar */
+    /* Called when user clicks "Connect Gist" button in toolbar or settings */
     showConnectModal: function() {
-        if (this.token && this.gistId) {
-            /* Already connected — show disconnect option */
-            if (confirm('You are connected to Gist ' + this.gistId + '.\n\nClick OK to disconnect, or Cancel to close.')) {
-                this.disconnect();
-            }
-            return;
-        }
-        /* Pre-fill from settings if available */
         var tokenField = document.getElementById('connect-gist-token');
         var idField = document.getElementById('connect-gist-id');
-        tokenField.value = state.settings.gistToken || '';
-        idField.value = state.settings.gistId || '';
+        var statusDiv = document.getElementById('gist-connect-current-status');
+        var disconnectBtn = document.getElementById('gist-disconnect-btn');
+        var successEl = document.getElementById('gist-connect-success');
+
+        /* Clear previous messages */
+        var errEl = document.getElementById('gist-connect-error');
+        if (errEl) errEl.style.display = 'none';
+        if (successEl) successEl.style.display = 'none';
+
+        /* If already connected, show status and disconnect option + pre-fill credentials */
+        if (this.token && this.gistId) {
+            var timeStr = this.lastSyncAt ? new Date(this.lastSyncAt).toLocaleString() : 'Never';
+            statusDiv.innerHTML = '<span class="privacy-indicator on"><i class="fa-solid fa-check"></i> Connected</span> <span style="font-size:10px;color:var(--text-muted);">Gist: ' + this._escHtml(this.gistId) + ' · Last sync: ' + timeStr + '</span>' +
+                '<div style="font-size:10px;color:var(--text-muted);margin-top:4px;">To reconnect with different credentials, just enter new values and click Connect.</div>';
+            statusDiv.style.display = 'block';
+            disconnectBtn.style.display = 'inline-flex';
+            /* Pre-fill current credentials so user can see/reconnect */
+            tokenField.value = this.token;
+            idField.value = this.gistId;
+        } else {
+            statusDiv.style.display = 'none';
+            disconnectBtn.style.display = 'none';
+            /* Pre-fill from settings if available */
+            tokenField.value = state.settings.gistToken || '';
+            idField.value = state.settings.gistId || '';
+        }
+
         /* Also check URL hash */
         var hash = window.location.hash;
         if (hash && hash.startsWith('#gist=')) {
             idField.value = hash.substring(6);
             history.replaceState(null, '', window.location.pathname);
         }
-        var errEl = document.getElementById('gist-connect-error');
-        if (errEl) errEl.style.display = 'none';
+
         document.getElementById('gist-connect-modal').style.display = 'flex';
         setTimeout(function() { tokenField.focus(); }, 150);
+    },
+
+    /* Disconnect from within the connect modal */
+    disconnectFromModal: function() {
+        this.disconnect();
+        /* Update the modal to show disconnected state */
+        var statusDiv = document.getElementById('gist-connect-current-status');
+        var disconnectBtn = document.getElementById('gist-disconnect-btn');
+        statusDiv.innerHTML = '<span class="privacy-indicator off"><i class="fa-solid fa-link-slash"></i> Disconnected</span>';
+        disconnectBtn.style.display = 'none';
+        /* Clear the form fields */
+        document.getElementById('connect-gist-token').value = '';
+        document.getElementById('connect-gist-id').value = '';
+        ui.toast('Gist disconnected', 'warning');
+    },
+
+    _escHtml: function(str) {
+        if (!str) return '';
+        return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     },
 
     /* Called from the Connect Modal form */
@@ -647,11 +678,13 @@ var gistSync = {
         var token = document.getElementById('connect-gist-token').value.trim();
         var gistId = document.getElementById('connect-gist-id').value.trim();
         var errEl = document.getElementById('gist-connect-error');
+        var successEl = document.getElementById('gist-connect-success');
         var submitBtn = document.getElementById('gist-connect-submit');
 
         if (!token) {
             errEl.textContent = 'Please enter your GitHub Personal Access Token.';
             errEl.style.display = 'block';
+            if (successEl) successEl.style.display = 'none';
             return;
         }
         if (!gistId && !confirm('No Gist ID entered. A new secret Gist will be created with your current data. Continue?')) {
@@ -662,6 +695,7 @@ var gistSync = {
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<span class="sync-spinner"></span> Connecting...';
         errEl.style.display = 'none';
+        if (successEl) successEl.style.display = 'none';
 
         try {
             if (!gistId) {
@@ -674,37 +708,63 @@ var gistSync = {
                     })
                 });
                 var data = await res.json();
-                if (!res.ok) throw new Error(data.message || 'Failed to create Gist (HTTP ' + res.status + ')');
+                if (!res.ok) {
+                    var errMsg = data.message || 'Failed to create Gist (HTTP ' + res.status + ')';
+                    if (res.status === 401) errMsg = 'Invalid GitHub token. Make sure it has the "gist" scope enabled.';
+                    if (res.status === 403 && data.message && data.message.indexOf('rate limit') !== -1) errMsg = 'GitHub API rate limit exceeded. Please wait a minute and try again.';
+                    throw new Error(errMsg);
+                }
                 gistId = data.id;
             } else {
-                /* Verify existing Gist */
+                /* Verify existing Gist — try to read it */
                 var res2 = await fetch('https://api.github.com/gists/' + gistId, {
                     headers: { 'Authorization': 'token ' + token, 'Accept': 'application/vnd.github.v3+json' }
                 });
                 if (!res2.ok) {
                     var errData = {};
                     try { errData = await res2.json(); } catch(e2) {}
-                    if (res2.status === 401) throw new Error('Invalid GitHub token. Make sure it has the "gist" scope.');
-                    if (res2.status === 404) throw new Error('Gist not found. Check the Gist ID and make sure your token has access.');
+                    if (res2.status === 401) throw new Error('Invalid GitHub token. Make sure it has the "gist" scope enabled.');
+                    if (res2.status === 404) throw new Error('Gist not found. Check the Gist ID and make sure your token has access to it.');
+                    if (res2.status === 403 && errData.message && errData.message.indexOf('rate limit') !== -1) throw new Error('GitHub API rate limit exceeded. Please wait a minute and try again.');
                     throw new Error(errData.message || 'Could not access Gist (HTTP ' + res2.status + ')');
                 }
             }
 
-            /* Save credentials */
+            /* Save credentials — ONLY after successful validation */
             this.token = token;
             this.gistId = gistId;
             this.lastSyncAt = new Date().toISOString();
             this._saveCredentials();
             this.updateUI();
-            ui.hideModal('gist-connect-modal');
 
-            /* If Gist has data, load it (merge with local) */
-            ui.toast('Connected! Syncing data...', 'success');
+            /* Show success in the modal (keep modal open during sync) */
+            if (successEl) {
+                successEl.innerHTML = '<i class="fa-solid fa-check-circle"></i> Connected to Gist ' + this._escHtml(gistId) + '! Syncing data...';
+                successEl.style.display = 'block';
+            }
+            if (errEl) errEl.style.display = 'none';
+
+            /* Do the actual sync (load from Gist + push merged data) */
             await this._doSync();
 
+            /* After successful sync, close the modal */
+            ui.hideModal('gist-connect-modal');
+
         } catch (e) {
-            errEl.textContent = e.message;
+            /* DO NOT close modal on error — keep it open so user can fix and retry */
+            errEl.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> ' + this._escHtml(e.message);
             errEl.style.display = 'block';
+            if (successEl) successEl.style.display = 'none';
+            /* If credentials were saved but sync failed, update status */
+            if (this.token && this.gistId) {
+                var statusDiv2 = document.getElementById('gist-connect-current-status');
+                if (statusDiv2) {
+                    statusDiv2.innerHTML = '<span class="privacy-indicator off" style="background:rgba(239,68,68,.15);color:var(--danger);border-color:rgba(239,68,68,.2);"><i class="fa-solid fa-exclamation-triangle"></i> Connected but sync failed</span> <span style="font-size:10px;color:var(--text-muted);">You can try Sync Now from the toolbar.</span>';
+                    statusDiv2.style.display = 'block';
+                }
+                var disconnectBtn2 = document.getElementById('gist-disconnect-btn');
+                if (disconnectBtn2) disconnectBtn2.style.display = 'inline-flex';
+            }
         } finally {
             submitBtn.disabled = false;
             submitBtn.innerHTML = '<i class="fa-solid fa-plug"></i> Connect & Sync';
@@ -730,11 +790,11 @@ var gistSync = {
         state.settings.gistToken = this.token;
         state.settings.gistId = this.gistId;
         localStorage.setItem('aig_settings', JSON.stringify(state.settings));
-        /* Also update settings modal fields */
-        var tokenEl = document.getElementById('gist-token');
-        var idEl = document.getElementById('gist-id');
-        if (tokenEl) tokenEl.value = this.token;
-        if (idEl) idEl.value = this.gistId;
+        /* Also update connect modal fields if visible */
+        var connTokenEl = document.getElementById('connect-gist-token');
+        var connIdEl = document.getElementById('connect-gist-id');
+        if (connTokenEl && connTokenEl.offsetParent !== null) connTokenEl.value = this.token;
+        if (connIdEl && connIdEl.offsetParent !== null) connIdEl.value = this.gistId;
     },
 
     updateUI: function() {
@@ -747,7 +807,7 @@ var gistSync = {
             var timeStr = this.lastSyncAt ? ' · ' + this._timeAgoShort(this.lastSyncAt) : '';
             status.innerHTML = '<i class="fa-brands fa-github"></i> Synced' + timeStr;
             status.className = 'sync-status connected';
-            connectBtn.innerHTML = '<i class="fa-solid fa-link-slash"></i> Disconnect';
+            connectBtn.innerHTML = '<i class="fa-brands fa-github"></i> Gist Connected';
             connectBtn.onclick = function() { gistSync.showConnectModal(); };
             syncBtn.classList.remove('hidden');
             if (copyLinkBtn) copyLinkBtn.classList.remove('hidden');
@@ -823,7 +883,11 @@ var gistSync = {
             ui.toast('Sync already in progress...', 'warning');
             return;
         }
-        await this._doSync();
+        try {
+            await this._doSync();
+        } catch(e) {
+            /* Error already shown by _doSync and toast — no need to double-show */
+        }
     },
 
     _doSync: async function() {
@@ -840,6 +904,7 @@ var gistSync = {
         } catch(e) {
             this._setSyncingUI(false, e.message);
             ui.toast('Sync failed: ' + e.message, 'error');
+            throw e; /* Re-throw so callers (like connectFromModal) can handle it */
         }
     },
 
@@ -1787,17 +1852,28 @@ var aiGiant = {
 var ui = {
     showSettings: function() {
         document.getElementById('settings-modal').style.display = 'flex';
-        document.getElementById('gist-token').value = gistSync.token || state.settings.gistToken || '';
-        document.getElementById('gist-id').value = gistSync.gistId || state.settings.gistId || '';
         document.getElementById('custom-endpoint').value = state.settings.customEndpoint;
+        /* Privacy lock state */
+        var privacyBadge = document.getElementById('privacy-status-badge');
+        var disableLockBtn = document.getElementById('disable-lock-btn');
+        if (privacyLock.isEnabled()) {
+            if (privacyBadge) { privacyBadge.className = 'privacy-indicator on'; privacyBadge.innerHTML = '<i class="fa-solid fa-lock"></i> Enabled'; }
+            if (disableLockBtn) disableLockBtn.style.display = 'inline-flex';
+        } else {
+            if (privacyBadge) { privacyBadge.className = 'privacy-indicator off'; privacyBadge.innerHTML = '<i class="fa-solid fa-lock-open"></i> Disabled'; }
+            if (disableLockBtn) disableLockBtn.style.display = 'none';
+        }
         /* Show Gist connection status */
         var statusDiv = document.getElementById('gist-settings-status');
+        var actionsDiv = document.getElementById('gist-settings-actions');
         if (statusDiv) {
             if (gistSync.token && gistSync.gistId) {
                 var timeStr = gistSync.lastSyncAt ? new Date(gistSync.lastSyncAt).toLocaleString() : 'Never';
                 statusDiv.innerHTML = '<span class="privacy-indicator on"><i class="fa-solid fa-check"></i> Connected</span> <span style="font-size:10px;color:var(--text-muted);">Gist: ' + gistSync.gistId + ' · Last sync: ' + timeStr + '</span>';
+                if (actionsDiv) actionsDiv.classList.remove('hidden');
             } else {
                 statusDiv.innerHTML = '<span class="privacy-indicator off"><i class="fa-solid fa-lock-open"></i> Not Connected</span>';
+                if (actionsDiv) actionsDiv.classList.add('hidden');
             }
         }
     },
@@ -1881,22 +1957,10 @@ var app = {
     },
 
     saveSettings: function() {
-        var newToken = document.getElementById('gist-token').value.trim();
-        var newGistId = document.getElementById('gist-id').value.trim();
-        state.settings.gistToken = newToken;
-        state.settings.gistId = newGistId;
         state.settings.customEndpoint = document.getElementById('custom-endpoint').value.trim();
         localStorage.setItem('aig_settings', JSON.stringify(state.settings));
         ui.hideSettings();
         ui.toast('Configuration saved', 'success');
-        /* If both token and Gist ID are provided, auto-connect */
-        if (newToken && newGistId && (newToken !== gistSync.token || newGistId !== gistSync.gistId)) {
-            gistSync.token = newToken;
-            gistSync.gistId = newGistId;
-            gistSync._saveCredentials();
-            gistSync.updateUI();
-            gistSync._doSync();
-        }
     }
 };
 
