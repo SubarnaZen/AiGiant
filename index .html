@@ -1,0 +1,1473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Giant — SubarnaZen Nexus</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --bg-app: #0c0e12; --bg-panel: #13161c; --bg-panel-glass: rgba(19, 22, 28, 0.97);
+            --border: #242830; --accent: #3b82f6; --accent-hover: #2563eb; --accent-glow: rgba(59, 130, 246, 0.18);
+            --text-main: #dde3ee; --text-muted: #6b7694; --success: #10b981; --warning: #f59e0b; --danger: #ef4444;
+            --radius: 8px; --font-ui: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            --scrollbar-track: #13161c; --scrollbar-thumb: #2a2e38;
+        }
+        [data-theme="light"] {
+            --bg-app: #f1f4f9; --bg-panel: #ffffff; --bg-panel-glass: rgba(255,255,255,0.97);
+            --border: #dde3ef; --text-main: #1a2035; --text-muted: #64748b; --accent-glow: rgba(59,130,246,0.1);
+            --scrollbar-track: #f1f4f9; --scrollbar-thumb: #c4c9d4;
+        }
+        * { box-sizing: border-box; outline: none; }
+        body { margin:0; padding:0; background:var(--bg-app); color:var(--text-main); font-family:var(--font-ui); height:100vh; overflow:hidden; display:flex; flex-direction:column; }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width:6px; height:6px; }
+        ::-webkit-scrollbar-track { background:var(--scrollbar-track); }
+        ::-webkit-scrollbar-thumb { background:var(--scrollbar-thumb); border-radius:3px; }
+        ::-webkit-scrollbar-thumb:hover { background:var(--accent); }
+
+        /* Header */
+        header { height:48px; background:var(--bg-panel); border-bottom:1px solid var(--border); display:flex; align-items:center; padding:0 16px; justify-content:space-between; z-index:100; flex-shrink:0; }
+        .brand { font-weight:800; font-size:15px; letter-spacing:-.5px; display:flex; align-items:center; gap:8px; color:var(--accent); }
+        .brand small { font-size:10px; font-weight:400; color:var(--text-muted); margin-left:3px; }
+        .header-actions { display:flex; gap:6px; align-items:center; }
+        .btn-icon { background:transparent; border:none; color:var(--text-muted); cursor:pointer; padding:6px 10px; border-radius:5px; transition:.15s; font-size:13px; display:inline-flex; align-items:center; gap:6px; font-family:var(--font-ui); }
+        .btn-icon:hover { background:rgba(255,255,255,0.06); color:var(--text-main); }
+        [data-theme="light"] .btn-icon:hover { background:rgba(0,0,0,0.04); }
+        .btn-primary { background:var(--accent); color:white; border:none; padding:6px 14px; border-radius:5px; font-size:12px; font-weight:600; cursor:pointer; transition:.15s; display:inline-flex; align-items:center; gap:6px; font-family:var(--font-ui); }
+        .btn-primary:hover { background:var(--accent-hover); }
+        .btn-danger { background:var(--danger); color:white; border:none; padding:6px 14px; border-radius:5px; font-size:12px; font-weight:600; cursor:pointer; transition:.15s; display:inline-flex; align-items:center; gap:6px; font-family:var(--font-ui); }
+        .sep { width:1px; height:20px; background:var(--border); margin:0 6px; }
+
+        /* Toolbar */
+        .aig-toolbar { padding:10px 18px; background:var(--bg-panel); border-bottom:1px solid var(--border); display:flex; align-items:center; gap:8px; flex-shrink:0; flex-wrap:wrap; }
+        .aig-search { flex:1; min-width:180px; max-width:360px; background:var(--bg-app); border:1px solid var(--border); color:var(--text-main); padding:7px 12px 7px 32px; border-radius:6px; font-size:12px; font-family:var(--font-ui); transition:.15s; }
+        .aig-search:focus { border-color:var(--accent); }
+        .search-wrapper { position:relative; flex:1; min-width:180px; max-width:360px; }
+        .search-wrapper i { position:absolute; left:10px; top:50%; transform:translateY(-50%); color:var(--text-muted); font-size:11px; pointer-events:none; }
+        .sync-status { display:flex; align-items:center; gap:6px; font-size:11px; color:var(--text-muted); background:var(--bg-app); border:1px solid var(--border); padding:4px 10px; border-radius:5px; white-space:nowrap; }
+        .sync-status.connected { border-color:rgba(16,185,129,.4); color:var(--success); background:rgba(16,185,129,.08); }
+        .sync-status i { font-size:13px; }
+
+        /* History Bar */
+        .aig-history-bar { padding:6px 18px; background:var(--bg-app); border-bottom:1px solid var(--border); display:flex; align-items:center; gap:8px; flex-shrink:0; }
+        .aig-history-bar input { flex:1; max-width:320px; background:var(--bg-panel); border:1px solid var(--border); color:var(--text-main); padding:6px 10px; border-radius:5px; font-size:11px; font-family:var(--font-ui); transition:.15s; }
+        .aig-history-bar input:focus { border-color:var(--accent); }
+        .history-results { position:absolute; top:100%; left:0; right:0; background:var(--bg-panel); border:1px solid var(--border); border-radius:6px; z-index:300; max-height:220px; overflow-y:auto; box-shadow:0 8px 24px rgba(0,0,0,.4); display:none; }
+        .history-result-item { padding:8px 12px; cursor:pointer; font-size:12px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:8px; transition:.1s; }
+        .history-result-item:hover { background:var(--accent-glow); }
+        .history-result-item:last-child { border-bottom:none; }
+        .aig-history-wrapper { position:relative; flex:1; max-width:320px; }
+
+        /* Groups Bar */
+        .aig-groups-bar { padding:8px 18px; background:var(--bg-panel); border-bottom:1px solid var(--border); display:flex; align-items:center; gap:5px; overflow-x:auto; flex-shrink:0; }
+        .aig-groups-bar::-webkit-scrollbar { height:0; }
+        .group-chip { padding:4px 14px; border-radius:20px; border:1px solid var(--border); background:transparent; color:var(--text-muted); cursor:pointer; font-size:11px; font-weight:600; white-space:nowrap; transition:.15s; font-family:var(--font-ui); }
+        .group-chip:hover { border-color:var(--accent); color:var(--text-main); }
+        .group-chip.active { background:var(--accent); border-color:var(--accent); color:white; }
+
+        /* Content Area */
+        .aig-content { flex:1; overflow-y:auto; padding:22px; }
+        .shortcuts-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(190px,1fr)); gap:12px; }
+
+        /* Shortcut Cards */
+        .shortcut-card { background:var(--bg-panel); border:1px solid var(--border); border-radius:10px; padding:14px; cursor:grab; transition:.2s; position:relative; display:flex; flex-direction:column; gap:8px; text-decoration:none; color:inherit; user-select:none; }
+        .shortcut-card:hover { border-color:var(--accent); transform:translateY(-2px); box-shadow:0 8px 22px rgba(59,130,246,.13); }
+        .shortcut-card.drag-over { border-color:var(--accent); background:var(--accent-glow); transform:scale(1.03); }
+        .shortcut-card.dragging { opacity:.4; transform:scale(.97); }
+        .shortcut-card-top { display:flex; align-items:center; gap:9px; }
+        .shortcut-logo { width:36px; height:36px; border-radius:7px; object-fit:contain; background:rgba(255,255,255,.06); padding:3px; flex-shrink:0; }
+        .shortcut-logo-fallback { width:36px; height:36px; border-radius:7px; background:var(--accent); display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:700; color:white; flex-shrink:0; }
+        .shortcut-name { font-size:12px; font-weight:700; color:var(--text-main); line-height:1.3; }
+        .shortcut-url { font-size:10px; color:var(--text-muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:120px; }
+        .shortcut-desc { font-size:11px; color:var(--text-muted); line-height:1.4; }
+        .shortcut-badge { font-size:9px; padding:2px 7px; border-radius:10px; background:var(--accent-glow); color:var(--accent); align-self:flex-start; border:1px solid rgba(59,130,246,.18); }
+        .shortcut-actions { position:absolute; top:7px; right:7px; display:flex; gap:3px; opacity:0; transition:.15s; }
+        .shortcut-card:hover .shortcut-actions { opacity:1; }
+        .sc-btn { background:rgba(0,0,0,.45); border:none; color:var(--text-muted); cursor:pointer; padding:3px 6px; border-radius:4px; font-size:10px; transition:.15s; }
+        .sc-btn:hover { background:var(--danger); color:white; }
+        .sc-btn.edit:hover { background:var(--accent); color:white; }
+        .priority-pin { position:absolute; top:6px; left:6px; color:var(--warning); font-size:10px; animation:pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity:1; } 50% { opacity:.5; } }
+
+        /* Group Sections */
+        .group-section { margin-bottom:28px; }
+        .group-section-title { font-size:10px; text-transform:uppercase; letter-spacing:1.2px; color:var(--text-muted); font-weight:700; margin:0 0 10px 0; padding-bottom:7px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:7px; }
+
+        /* Empty State */
+        .aig-empty { text-align:center; padding:70px 20px; color:var(--text-muted); }
+        .aig-empty i { font-size:48px; opacity:.12; margin-bottom:16px; display:block; }
+        .aig-empty h3 { font-size:16px; margin:0 0 8px 0; color:var(--text-main); }
+        .aig-empty p { font-size:12px; }
+
+        /* Modals */
+        .modal-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,.65); display:none; align-items:center; justify-content:center; z-index:1000; backdrop-filter:blur(6px); }
+        .modal { background:var(--bg-panel); width:580px; border-radius:10px; border:1px solid var(--border); box-shadow:0 20px 30px rgba(0,0,0,.5); display:flex; flex-direction:column; max-height:87vh; }
+        .modal-header { padding:14px 18px; border-bottom:1px solid var(--border); font-size:15px; font-weight:700; display:flex; justify-content:space-between; align-items:center; }
+        .modal-header .close-btn { cursor:pointer; color:var(--text-muted); transition:.15s; padding:4px; }
+        .modal-header .close-btn:hover { color:var(--text-main); }
+        .modal-body { padding:18px; overflow-y:auto; flex:1; }
+
+        /* Forms */
+        .form-group { margin-bottom:13px; }
+        .form-label { display:block; font-size:11px; margin-bottom:5px; color:var(--text-muted); font-weight:600; }
+        .form-input { width:100%; background:var(--bg-app); border:1px solid var(--border); color:var(--text-main); padding:7px 9px; border-radius:5px; font-family:var(--font-ui); font-size:13px; transition:.15s; }
+        .form-input:focus { border-color:var(--accent); }
+        select.form-input { cursor:pointer; }
+        .group-manage-item { display:flex; align-items:center; justify-content:space-between; padding:7px 11px; background:var(--bg-app); border:1px solid var(--border); border-radius:6px; margin-bottom:7px; font-size:12px; transition:.15s; }
+        .group-manage-item:hover { border-color:var(--accent); }
+        .delete-group-btn { background:transparent; border:none; color:var(--text-muted); cursor:pointer; padding:3px 6px; border-radius:4px; transition:.15s; }
+        .delete-group-btn:hover { color:var(--danger); }
+
+        /* API Keys */
+        .api-key-row { background:var(--bg-app); border:1px solid var(--border); border-radius:7px; padding:12px; margin-bottom:10px; }
+        .api-key-row-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:7px; }
+        .api-provider-name { font-size:12px; font-weight:600; display:flex; align-items:center; gap:7px; }
+        .api-status { font-size:10px; padding:2px 7px; border-radius:10px; font-weight:600; }
+        .api-status.set { background:rgba(16,185,129,.15); color:var(--success); border:1px solid rgba(16,185,129,.2); }
+        .api-status.unset { background:rgba(245,158,11,.12); color:var(--warning); border:1px solid rgba(245,158,11,.2); }
+
+        /* Toasts */
+        .toast { position:fixed; bottom:22px; right:22px; background:var(--bg-panel); color:var(--text-main); padding:10px 18px; border-radius:6px; border-left:4px solid var(--accent); box-shadow:0 6px 18px rgba(0,0,0,.35); z-index:2000; font-size:12px; animation:toastIn .25s; pointer-events:none; }
+        .toast.error { border-left-color:var(--danger); }
+        .toast.success { border-left-color:var(--success); }
+        .toast.warning { border-left-color:var(--warning); }
+        @keyframes toastIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+
+        .hidden { display:none !important; }
+
+        /* Privacy Lock Screen */
+        .lock-screen { position:fixed; top:0; left:0; width:100%; height:100%; background:var(--bg-app); z-index:9999; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:20px; }
+        .lock-screen.hidden { display:none !important; }
+        .lock-card { background:var(--bg-panel); border:1px solid var(--border); border-radius:12px; padding:32px; width:380px; max-width:90vw; text-align:center; box-shadow:0 16px 40px rgba(0,0,0,.5); }
+        .lock-card .lock-icon { font-size:40px; color:var(--accent); margin-bottom:16px; }
+        .lock-card h2 { font-size:18px; margin:0 0 6px 0; color:var(--text-main); }
+        .lock-card p { font-size:12px; color:var(--text-muted); margin:0 0 20px 0; }
+        .lock-card .form-input { text-align:center; font-size:14px; padding:10px 14px; margin-bottom:14px; }
+        .lock-card .btn-primary { width:100%; padding:10px; font-size:13px; justify-content:center; }
+        .lock-error { color:var(--danger); font-size:11px; margin-top:8px; display:none; }
+        .lock-setup { margin-top:12px; padding-top:12px; border-top:1px solid var(--border); }
+        .lock-setup .form-label { text-align:left; }
+        .lock-setup .form-input { text-align:left; font-size:12px; padding:8px 10px; }
+        .privacy-indicator { display:inline-flex; align-items:center; gap:4px; font-size:10px; padding:2px 8px; border-radius:10px; }
+        .privacy-indicator.on { background:rgba(16,185,129,.15); color:var(--success); border:1px solid rgba(16,185,129,.2); }
+        .privacy-indicator.off { background:rgba(245,158,11,.12); color:var(--warning); border:1px solid rgba(245,158,11,.2); }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            header { padding:0 10px; }
+            .aig-toolbar { padding:8px 10px; gap:6px; }
+            .aig-search { max-width:none; }
+            .search-wrapper { max-width:none; }
+            .aig-history-bar { padding:6px 10px; }
+            .aig-groups-bar { padding:6px 10px; }
+            .aig-content { padding:12px; }
+            .shortcuts-grid { grid-template-columns:repeat(auto-fill, minmax(150px,1fr)); gap:8px; }
+            .modal { width:95vw !important; }
+            .brand small { display:none; }
+            .header-actions .btn-text { display:none; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- PRIVACY LOCK SCREEN -->
+<div id="lock-screen" class="lock-screen hidden">
+    <div class="lock-card">
+        <div class="lock-icon"><i class="fa-solid fa-shield-halved"></i></div>
+        <h2>AI Giant is Locked</h2>
+        <p>Enter your passphrase to unlock your dashboard</p>
+        <input type="password" class="form-input" id="lock-passphrase" placeholder="Enter passphrase..." onkeydown="if(event.key==='Enter') privacyLock.unlock()">
+        <button class="btn-primary" onclick="privacyLock.unlock()"><i class="fa-solid fa-lock-open"></i> Unlock</button>
+        <div class="lock-error" id="lock-error"><i class="fa-solid fa-circle-exclamation"></i> Incorrect passphrase. Try again.</div>
+    </div>
+</div>
+
+<header>
+    <div class="brand"><i class="fa-solid fa-rocket"></i> AI Giant <small>by SubarnaZen</small></div>
+    <div class="header-actions">
+        <div id="sync-status" class="sync-status"><i class="fa-brands fa-github"></i> Gist: Not Connected</div>
+        <div class="sep"></div>
+        <button class="btn-icon" title="Toggle Theme" onclick="toggleTheme()"><i class="fa-solid fa-circle-half-stroke"></i></button>
+        <button class="btn-icon" title="Lock Dashboard" onclick="privacyLock.lock()" id="lock-btn" style="display:none;"><i class="fa-solid fa-lock"></i></button>
+        <button class="btn-icon" title="Settings" onclick="ui.showSettings()"><i class="fa-solid fa-sliders"></i></button>
+        <button class="btn-icon" title="Export Session" onclick="aiGiant.exportSession()" style="color:var(--success);border:1px solid rgba(16,185,129,.3);"><i class="fa-solid fa-file-export"></i> <span class="btn-text">Export</span></button>
+        <button class="btn-icon" title="Resume Session" onclick="aiGiant.importSession()" style="border:1px solid var(--border);"><i class="fa-solid fa-file-import"></i> <span class="btn-text">Resume</span></button>
+    </div>
+</header>
+<div class="aig-toolbar">
+    <div class="search-wrapper">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" class="aig-search" id="aig-search" placeholder="Search shortcuts..." oninput="aiGiant.search(this.value)">
+    </div>
+    <button class="btn-primary" onclick="aiGiant.openAddModal()"><i class="fa-solid fa-plus"></i> Add</button>
+    <button class="btn-icon" onclick="aiGiant.openGroupsModal()" style="border:1px solid var(--border);padding:5px 10px;border-radius:4px;font-size:11px;"><i class="fa-solid fa-folder-gear"></i> Groups</button>
+    <button class="btn-icon" onclick="aiGiant.openApiKeysModal()" style="border:1px solid var(--border);padding:5px 10px;border-radius:4px;font-size:11px;"><i class="fa-solid fa-key"></i> Keys</button>
+    <button class="btn-icon" onclick="gistSync.connect()" style="border:1px solid var(--border);padding:5px 10px;border-radius:4px;font-size:11px;" id="gist-connect-btn"><i class="fa-brands fa-github"></i> Connect Gist</button>
+    <button class="btn-icon hidden" onclick="gistSync.syncNow()" style="border:1px solid var(--border);padding:5px 10px;border-radius:4px;font-size:11px;" id="gist-sync-btn"><i class="fa-solid fa-rotate"></i> Sync Now</button>
+    <div style="margin-left:auto;display:flex;align-items:center;gap:6px;">
+        <span style="font-size:11px;color:var(--text-muted);"><i class="fa-solid fa-bolt" style="color:var(--accent);"></i> <span id="aig-total-count">0</span> sites</span>
+    </div>
+</div>
+<div class="aig-history-bar">
+    <i class="fa-solid fa-clock-rotate-left" style="color:var(--text-muted);font-size:11px;"></i>
+    <div class="aig-history-wrapper">
+        <input type="text" id="aig-history-search" placeholder="Search visit history..." oninput="aiGiant.searchHistory(this.value)" onfocus="aiGiant.searchHistory(this.value)">
+        <div id="history-results" class="history-results"></div>
+    </div>
+    <span style="font-size:10px;color:var(--text-muted);">Recent visits accessible across sessions</span>
+</div>
+<div class="aig-groups-bar" id="aig-groups-bar"></div>
+<div class="aig-content"><div id="aig-grid"></div></div>
+
+<!-- ADD / EDIT SHORTCUT -->
+<div class="modal-overlay" id="add-shortcut-modal">
+    <div class="modal" style="width:470px;">
+        <div class="modal-header">
+            <span id="add-modal-title"><i class="fa-solid fa-plus" style="color:var(--accent);"></i> Add Shortcut</span>
+            <i class="fa-solid fa-xmark close-btn" onclick="ui.hideModal('add-shortcut-modal')"></i>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="sc-edit-id" value="">
+            <div class="form-group">
+                <label class="form-label">Site / Tool Name *</label>
+                <input type="text" class="form-input" id="sc-name" placeholder="e.g. Claude AI, Notion, Perplexity..." oninput="aiGiant.previewFavicon()">
+            </div>
+            <div class="form-group">
+                <label class="form-label">URL *</label>
+                <div style="display:flex;gap:7px;align-items:center;">
+                    <input type="url" class="form-input" id="sc-url" placeholder="https://..." oninput="aiGiant.previewFavicon()" style="flex:1;">
+                    <div id="sc-favicon-preview" style="width:34px;height:34px;border-radius:7px;background:var(--bg-app);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                        <i class="fa-solid fa-globe" style="color:var(--text-muted);font-size:13px;"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Short Description</label>
+                <input type="text" class="form-input" id="sc-desc" placeholder="What does this tool do? (optional)">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Category / Group</label>
+                <select class="form-input" id="sc-group"></select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Open Mode</label>
+                <select class="form-input" id="sc-open-mode">
+                    <option value="same">Same window (new tab)</option>
+                    <option value="new">New browser window</option>
+                </select>
+            </div>
+            <div class="form-group" style="display:flex;align-items:center;gap:9px;">
+                <input type="checkbox" id="sc-priority" style="width:16px;height:16px;cursor:pointer;accent-color:var(--accent);">
+                <label for="sc-priority" class="form-label" style="margin:0;cursor:pointer;">&#11088; Mark as priority (pins to top)</label>
+            </div>
+            <div style="display:flex;gap:9px;margin-top:18px;">
+                <button class="btn-primary" style="flex:1;" onclick="aiGiant.saveShortcut()"><i class="fa-solid fa-check"></i> <span id="add-modal-btn-label">Add Shortcut</span></button>
+                <button class="btn-icon" style="border:1px solid var(--border);padding:5px 14px;border-radius:4px;" onclick="ui.hideModal('add-shortcut-modal')">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MANAGE GROUPS -->
+<div class="modal-overlay" id="groups-modal">
+    <div class="modal" style="width:400px;">
+        <div class="modal-header">
+            <span><i class="fa-solid fa-folder-gear" style="color:var(--accent);"></i> Manage Groups</span>
+            <i class="fa-solid fa-xmark close-btn" onclick="ui.hideModal('groups-modal')"></i>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label class="form-label">Create New Group</label>
+                <div style="display:flex;gap:7px;">
+                    <input type="text" class="form-input" id="new-group-name" placeholder="Group name..." style="flex:1;" onkeydown="if(event.key==='Enter') aiGiant.createGroup()">
+                    <button class="btn-primary" onclick="aiGiant.createGroup()"><i class="fa-solid fa-plus"></i> Add</button>
+                </div>
+            </div>
+            <hr style="border:0;border-top:1px solid var(--border);margin:13px 0;">
+            <div class="form-label" style="margin-bottom:9px;">Existing Groups</div>
+            <div id="groups-list"></div>
+        </div>
+    </div>
+</div>
+
+<!-- API KEYS -->
+<div class="modal-overlay" id="api-keys-modal">
+    <div class="modal" style="width:500px;">
+        <div class="modal-header">
+            <span><i class="fa-solid fa-key" style="color:var(--accent);"></i> AI Model API Keys</span>
+            <i class="fa-solid fa-xmark close-btn" onclick="ui.hideModal('api-keys-modal')"></i>
+        </div>
+        <div class="modal-body">
+            <p style="font-size:11px;color:var(--text-muted);margin:0 0 16px 0;">Keys stored locally and synced to your Gist. Never shared elsewhere.</p>
+            <div id="api-keys-list"></div>
+            <hr style="border:0;border-top:1px solid var(--border);margin:16px 0;">
+            <div class="form-label" style="margin-bottom:9px;">Add Custom Provider</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:9px;">
+                <input type="text" class="form-input" id="custom-provider-name" placeholder="Provider name (e.g. Groq)">
+                <input type="password" class="form-input" id="custom-provider-key" placeholder="API Key...">
+            </div>
+            <button class="btn-primary" style="width:100%;" onclick="aiGiant.saveApiKeys()"><i class="fa-solid fa-floppy-disk"></i> Save All API Keys</button>
+        </div>
+    </div>
+</div>
+
+<!-- SETTINGS -->
+<div class="modal-overlay" id="settings-modal">
+    <div class="modal" style="width:520px;">
+        <div class="modal-header">
+            <span><i class="fa-solid fa-sliders" style="color:var(--accent);"></i> System Configuration</span>
+            <i class="fa-solid fa-xmark close-btn" onclick="ui.hideModal('settings-modal')"></i>
+        </div>
+        <div class="modal-body">
+            <div style="background:var(--bg-app);border:1px solid var(--border);border-radius:7px;padding:13px;margin-bottom:16px;">
+                <div style="font-size:12px;font-weight:700;margin-bottom:8px;"><i class="fa-brands fa-github" style="color:var(--accent);"></i> GitHub Gist Sync <span style="font-weight:400;color:var(--text-muted);font-size:10px;">(free, no credit card)</span></div>
+                <div class="form-group">
+                    <label class="form-label">GitHub Personal Access Token (Classic)</label>
+                    <input type="password" class="form-input" id="gist-token" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Gist ID <span style="font-weight:400;color:var(--text-muted);">(leave empty to auto-create)</span></label>
+                    <input type="text" class="form-input" id="gist-id" placeholder="abc123def456...">
+                </div>
+                <div style="font-size:10px;color:var(--text-muted);line-height:1.4;margin-top:4px;">
+                    1. Go to GitHub &rarr; Settings &rarr; Developer settings &rarr; Personal access tokens &rarr; <strong>Tokens (classic)</strong><br>
+                    2. Generate new token &rarr; check <strong>gist</strong> scope only &rarr; copy token<br>
+                    3. Paste above &rarr; click <strong>Save</strong> &rarr; click <strong>Connect Gist</strong> in toolbar
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Local/Custom Endpoint (Ollama etc.)</label>
+                <input type="text" class="form-input" id="custom-endpoint" value="http://localhost:11434/v1/chat/completions">
+            </div>
+            <div style="background:var(--bg-app);border:1px solid var(--border);border-radius:7px;padding:13px;margin-bottom:16px;">
+                <div style="font-size:12px;font-weight:700;margin-bottom:8px;"><i class="fa-solid fa-shield-halved" style="color:var(--accent);"></i> Privacy Lock <span style="font-weight:400;color:var(--text-muted);font-size:10px;">(client-side passphrase protection)</span></div>
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+                    <span class="privacy-indicator off" id="privacy-status-badge"><i class="fa-solid fa-lock-open"></i> Disabled</span>
+                    <span style="font-size:10px;color:var(--text-muted);">Prevents unauthorized access to your dashboard</span>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Set / Change Passphrase</label>
+                    <input type="password" class="form-input" id="privacy-passphrase" placeholder="Enter a passphrase...">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Confirm Passphrase</label>
+                    <input type="password" class="form-input" id="privacy-passphrase-confirm" placeholder="Re-enter passphrase...">
+                </div>
+                <div style="display:flex;gap:8px;">
+                    <button class="btn-primary" style="flex:1;" onclick="privacyLock.enableFromSettings()"><i class="fa-solid fa-shield-halved"></i> Enable Lock</button>
+                    <button class="btn-danger" style="flex:1;display:none;" id="disable-lock-btn" onclick="privacyLock.disable()"><i class="fa-solid fa-lock-open"></i> Disable Lock</button>
+                </div>
+            </div>
+            <button class="btn-primary" style="width:100%;margin-top:6px;" onclick="app.saveSettings()"><i class="fa-solid fa-floppy-disk"></i> Save Configuration</button>
+        </div>
+    </div>
+</div>
+
+<!-- SESSION IMPORT PREVIEW -->
+<div class="modal-overlay" id="session-import-modal">
+    <div class="modal" style="width:480px;">
+        <div class="modal-header">
+            <span><i class="fa-solid fa-file-import" style="color:var(--accent);"></i> Resume Session</span>
+            <i class="fa-solid fa-xmark close-btn" onclick="ui.hideModal('session-import-modal')"></i>
+        </div>
+        <div class="modal-body">
+            <div id="session-import-info"></div>
+            <div style="display:flex;gap:9px;margin-top:16px;">
+                <button class="btn-primary" style="flex:1;" onclick="aiGiant.confirmSessionImport()"><i class="fa-solid fa-file-import"></i> Resume Session</button>
+                <button class="btn-icon" style="border:1px solid var(--border);padding:5px 14px;border-radius:4px;" onclick="ui.hideModal('session-import-modal')">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const SCHEMA_VERSION = 6;
+
+const state = {
+    settings: {
+        gistToken: '', gistId: '', customEndpoint: 'http://localhost:11434/v1/chat/completions'
+    }
+};
+
+/* ===== PRIVACY LOCK ===== */
+var privacyLock = {
+    _hashPassphrase: function(str) {
+        /* Simple SHA-256 based hash using SubtleCrypto (async not usable synchronously, so we use a deterministic string hash) */
+        var hash = 0;
+        for (var i = 0; i < str.length; i++) {
+            var ch = str.charCodeAt(i);
+            hash = ((hash << 5) - hash) + ch;
+            hash = hash & hash; /* Convert to 32bit integer */
+        }
+        /* Combine with a salt for better protection */
+        var salted = 'aig_privacy_' + str + '_subarnazen_nexus';
+        var hash2 = 0;
+        for (var j = 0; j < salted.length; j++) {
+            var ch2 = salted.charCodeAt(j);
+            hash2 = ((hash2 << 5) - hash2) + ch2;
+            hash2 = hash2 & hash2;
+        }
+        return 'h1_' + Math.abs(hash).toString(36) + '_h2_' + Math.abs(hash2).toString(36);
+    },
+
+    isEnabled: function() {
+        return !!localStorage.getItem('aig_privacy_hash');
+    },
+
+    init: function() {
+        if (this.isEnabled()) {
+            this.showLockScreen();
+        }
+        this.updateUI();
+    },
+
+    showLockScreen: function() {
+        document.getElementById('lock-screen').classList.remove('hidden');
+        document.getElementById('lock-passphrase').value = '';
+        document.getElementById('lock-error').style.display = 'none';
+        setTimeout(function() { document.getElementById('lock-passphrase').focus(); }, 150);
+    },
+
+    hideLockScreen: function() {
+        document.getElementById('lock-screen').classList.add('hidden');
+    },
+
+    unlock: function() {
+        var input = document.getElementById('lock-passphrase').value;
+        if (!input) return;
+        var hash = this._hashPassphrase(input);
+        var stored = localStorage.getItem('aig_privacy_hash');
+        if (hash === stored) {
+            this.hideLockScreen();
+            this.updateUI();
+        } else {
+            document.getElementById('lock-error').style.display = 'block';
+            document.getElementById('lock-passphrase').value = '';
+            document.getElementById('lock-passphrase').focus();
+        }
+    },
+
+    lock: function() {
+        this.showLockScreen();
+    },
+
+    enableFromSettings: function() {
+        var pw = document.getElementById('privacy-passphrase').value;
+        var pw2 = document.getElementById('privacy-passphrase-confirm').value;
+        if (!pw) { ui.toast('Please enter a passphrase', 'error'); return; }
+        if (pw.length < 4) { ui.toast('Passphrase must be at least 4 characters', 'error'); return; }
+        if (pw !== pw2) { ui.toast('Passphrases do not match', 'error'); return; }
+        var hash = this._hashPassphrase(pw);
+        localStorage.setItem('aig_privacy_hash', hash);
+        document.getElementById('privacy-passphrase').value = '';
+        document.getElementById('privacy-passphrase-confirm').value = '';
+        this.updateUI();
+        ui.toast('Privacy lock enabled! Your dashboard is now protected.', 'success');
+    },
+
+    disable: function() {
+        if (!confirm('Remove privacy lock? Anyone with the link can access your dashboard.')) return;
+        localStorage.removeItem('aig_privacy_hash');
+        this.updateUI();
+        ui.toast('Privacy lock disabled', 'warning');
+    },
+
+    updateUI: function() {
+        var enabled = this.isEnabled();
+        var lockBtn = document.getElementById('lock-btn');
+        var badge = document.getElementById('privacy-status-badge');
+        var disableBtn = document.getElementById('disable-lock-btn');
+        if (lockBtn) lockBtn.style.display = enabled ? '' : 'none';
+        if (badge) {
+            badge.className = 'privacy-indicator ' + (enabled ? 'on' : 'off');
+            badge.innerHTML = enabled ? '<i class="fa-solid fa-lock"></i> Enabled' : '<i class="fa-solid fa-lock-open"></i> Disabled';
+        }
+        if (disableBtn) disableBtn.style.display = enabled ? '' : 'none';
+    }
+};
+
+/* ===== THEME ===== */
+function toggleTheme() {
+    var isLight = document.body.getAttribute('data-theme') === 'light';
+    if (isLight) {
+        document.body.removeAttribute('data-theme');
+        localStorage.setItem('aig_theme', '');
+    } else {
+        document.body.setAttribute('data-theme', 'light');
+        localStorage.setItem('aig_theme', 'light');
+    }
+}
+
+/* ===== GITHUB GIST SYNC ===== */
+var gistSync = {
+    token: '', gistId: '', _syncDebounce: null,
+
+    init: function() {
+        var saved = localStorage.getItem('aig_gist');
+        if (saved) {
+            try {
+                var d = JSON.parse(saved);
+                this.token = d.token || '';
+                this.gistId = d.gistId || '';
+            } catch(e) {}
+        }
+        this.updateUI();
+    },
+
+    connect: async function() {
+        var token = document.getElementById('gist-token').value.trim() || this.token || state.settings.gistToken;
+        var gistId = document.getElementById('gist-id').value.trim() || this.gistId || state.settings.gistId;
+        if (!token) { ui.toast('Enter GitHub Personal Access Token in Settings first', 'warning'); ui.showSettings(); return; }
+        try {
+            if (!gistId) {
+                var res = await fetch('https://api.github.com/gists', {
+                    method: 'POST',
+                    headers: { 'Authorization': 'token ' + token, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' },
+                    body: JSON.stringify({ description: 'AI Giant Data Backup', public: false,
+                        files: { 'ai-giant-data.json': { content: JSON.stringify(aiGiant.getExportData(), null, 2) } }
+                    })
+                });
+                var data = await res.json();
+                if (!res.ok) throw new Error(data.message || 'Failed to create Gist');
+                gistId = data.id;
+                document.getElementById('gist-id').value = gistId;
+                ui.toast('Created new secret Gist: ' + gistId, 'success');
+            } else {
+                var res2 = await fetch('https://api.github.com/gists/' + gistId, {
+                    headers: { 'Authorization': 'token ' + token, 'Accept': 'application/vnd.github.v3+json' }
+                });
+                if (!res2.ok) throw new Error('Could not access Gist. Check Token and Gist ID.');
+            }
+            this.token = token;
+            this.gistId = gistId;
+            this.saveState();
+            this.updateUI();
+            ui.toast('GitHub Gist connected', 'success');
+            await this.syncNow();
+        } catch (e) { ui.toast(e.message, 'error'); }
+    },
+
+    disconnect: function() {
+        this.token = '';
+        this.gistId = '';
+        this.saveState();
+        this.updateUI();
+        ui.toast('Gist disconnected. Using local-only mode.', 'warning');
+    },
+
+    saveState: function() {
+        localStorage.setItem('aig_gist', JSON.stringify({ token: this.token, gistId: this.gistId }));
+    },
+
+    updateUI: function() {
+        var status = document.getElementById('sync-status');
+        var connectBtn = document.getElementById('gist-connect-btn');
+        var syncBtn = document.getElementById('gist-sync-btn');
+        if (this.token && this.gistId) {
+            status.innerHTML = '<i class="fa-brands fa-github"></i> Gist: Connected';
+            status.className = 'sync-status connected';
+            connectBtn.innerHTML = '<i class="fa-solid fa-link-slash"></i> Disconnect';
+            connectBtn.onclick = function() { gistSync.disconnect(); };
+            syncBtn.classList.remove('hidden');
+        } else {
+            status.innerHTML = '<i class="fa-brands fa-github"></i> Gist: Not Connected';
+            status.className = 'sync-status';
+            connectBtn.innerHTML = '<i class="fa-brands fa-github"></i> Connect Gist';
+            connectBtn.onclick = function() { gistSync.connect(); };
+            syncBtn.classList.add('hidden');
+        }
+    },
+
+    syncNow: async function() {
+        if (!this.token || !this.gistId) return;
+        await this.loadFromGist();
+        await this.saveToGist();
+        ui.toast('Synced with GitHub Gist', 'success');
+    },
+
+    saveToGist: async function() {
+        if (!this.token || !this.gistId) return;
+        var content = JSON.stringify(aiGiant.getExportData(), null, 2);
+        try {
+            var res = await fetch('https://api.github.com/gists/' + this.gistId, {
+                method: 'PATCH',
+                headers: { 'Authorization': 'token ' + this.token, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' },
+                body: JSON.stringify({ files: { 'ai-giant-data.json': { content: content } } })
+            });
+            if (!res.ok) throw new Error('Gist save failed');
+        } catch (e) { ui.toast('Gist sync failed: ' + e.message, 'error'); }
+    },
+
+    loadFromGist: async function() {
+        if (!this.token || !this.gistId) return;
+        try {
+            var res = await fetch('https://api.github.com/gists/' + this.gistId, {
+                headers: { 'Authorization': 'token ' + this.token, 'Accept': 'application/vnd.github.v3+json' }
+            });
+            if (!res.ok) throw new Error('Gist load failed');
+            var data = await res.json();
+            var file = data.files['ai-giant-data.json'];
+            if (file && file.content) {
+                var parsed = JSON.parse(file.content);
+                aiGiant.mergeImportData(parsed, true);
+            }
+        } catch (e) { console.warn('Gist load failed:', e); }
+    },
+
+    requestAutoSync: function() {
+        if (!this.token || !this.gistId) return;
+        clearTimeout(this._syncDebounce);
+        this._syncDebounce = setTimeout(function() { gistSync.saveToGist(); }, 1500);
+    }
+};
+
+/* ===== AI GIANT CORE ===== */
+var aiGiant = {
+    DEFAULT_DATA: {
+        _schemaVersion: SCHEMA_VERSION,
+        shortcuts: [],
+        groups: ['All Tools','Education','Tech','Productivity','Research','Social','Writing','Design','Dev Tools'],
+        apiKeys: { openai:'', anthropic:'', google:'', deepseek:'', mistral:'', groq:'', cohere:'', perplexity:'' },
+        customProviders: [],
+        visitHistory: []
+    },
+    data: null,
+    searchQuery: '',
+    activeGroup: 'All Tools',
+    dragSrcId: null,
+    _pendingImport: null,
+
+    init: function() {
+        var saved = localStorage.getItem('aig_v6');
+        if (saved) {
+            try {
+                var parsed = JSON.parse(saved);
+                this.data = Object.assign({}, JSON.parse(JSON.stringify(this.DEFAULT_DATA)), parsed);
+                this.data._schemaVersion = SCHEMA_VERSION;
+            } catch(e) {
+                this.data = JSON.parse(JSON.stringify(this.DEFAULT_DATA));
+            }
+        } else {
+            var old = localStorage.getItem('aig_v5') || localStorage.getItem('aig_v4') || localStorage.getItem('aig_v3') || localStorage.getItem('aig_v2');
+            if (old) {
+                try {
+                    var parsed2 = JSON.parse(old);
+                    this.data = Object.assign({}, JSON.parse(JSON.stringify(this.DEFAULT_DATA)), parsed2, { _schemaVersion: SCHEMA_VERSION });
+                    ui.toast('Migrated from previous version', 'success');
+                } catch(e) {
+                    this.data = JSON.parse(JSON.stringify(this.DEFAULT_DATA));
+                }
+            } else {
+                this.data = JSON.parse(JSON.stringify(this.DEFAULT_DATA));
+            }
+        }
+        if (this.data.groups.indexOf('All Tools') === -1) this.data.groups.unshift('All Tools');
+        if (!this.data.visitHistory) this.data.visitHistory = [];
+        if (!this.data.customProviders) this.data.customProviders = [];
+        this.render();
+        gistSync.init();
+    },
+
+    save: function() {
+        localStorage.setItem('aig_v6', JSON.stringify(this.data));
+        this.updateBadge();
+        gistSync.requestAutoSync();
+    },
+
+    updateBadge: function() {
+        var total = document.getElementById('aig-total-count');
+        var n = (this.data && this.data.shortcuts) ? this.data.shortcuts.length : 0;
+        if (total) total.textContent = n;
+    },
+
+    getFavicon: function(url) {
+        try { return 'https://www.google.com/s2/favicons?sz=64&domain_url=' + new URL(url).hostname; }
+        catch(e) { return null; }
+    },
+
+    previewFavicon: function() {
+        var url = document.getElementById('sc-url').value.trim();
+        var preview = document.getElementById('sc-favicon-preview');
+        if (!preview) return;
+        var f = this.getFavicon(url);
+        if (f) {
+            preview.innerHTML = '';
+            var img = document.createElement('img');
+            img.src = f;
+            img.style.cssText = 'width:26px;height:26px;object-fit:contain;border-radius:4px;';
+            img.onerror = function() {
+                preview.innerHTML = '<i class="fa-solid fa-globe" style="color:var(--text-muted);font-size:13px;"></i>';
+            };
+            preview.appendChild(img);
+        } else {
+            preview.innerHTML = '<i class="fa-solid fa-globe" style="color:var(--text-muted);font-size:13px;"></i>';
+        }
+    },
+
+    recordVisit: function(s) {
+        if (!this.data.visitHistory) this.data.visitHistory = [];
+        this.data.visitHistory.unshift({ id: s.id, name: s.name, url: s.url, visitedAt: new Date().toISOString() });
+        if (this.data.visitHistory.length > 200) this.data.visitHistory.length = 200;
+        this.save();
+    },
+
+    searchHistory: function(q) {
+        var box = document.getElementById('history-results');
+        if (!q) { box.style.display = 'none'; return; }
+        var lq = q.toLowerCase();
+        var matches = (this.data.visitHistory || []).filter(function(v) {
+            return v.name.toLowerCase().indexOf(lq) !== -1 || v.url.toLowerCase().indexOf(lq) !== -1;
+        }).slice(0, 8);
+        if (!matches.length) { box.style.display = 'none'; return; }
+        box.innerHTML = '';
+        for (var i = 0; i < matches.length; i++) {
+            (function(v) {
+                var ago = aiGiant._timeAgo(v.visitedAt);
+                var f = aiGiant.getFavicon(v.url);
+                var item = document.createElement('div');
+                item.className = 'history-result-item';
+                var logoHtml = f ? '<img src="' + f + '" style="width:16px;height:16px;object-fit:contain;border-radius:3px;" onerror="this.style.display=\'none\'">' : '';
+                item.innerHTML = logoHtml + '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + aiGiant._esc(v.name) + '</span><span style="font-size:10px;color:var(--text-muted);flex-shrink:0;">' + ago + '</span>';
+                item.onclick = function() {
+                    aiGiant.openSite({ url: v.url, openMode: 'same' });
+                    box.style.display = 'none';
+                    document.getElementById('aig-history-search').value = '';
+                };
+                box.appendChild(item);
+            })(matches[i]);
+        }
+        box.style.display = 'block';
+    },
+
+    _timeAgo: function(iso) {
+        var diff = Date.now() - new Date(iso).getTime();
+        var m = Math.floor(diff / 60000);
+        if (m < 1) return 'just now';
+        if (m < 60) return m + 'm ago';
+        var h = Math.floor(m / 60);
+        if (h < 24) return h + 'h ago';
+        return Math.floor(h / 24) + 'd ago';
+    },
+
+    _esc: function(str) {
+        if (!str) return '';
+        return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    },
+
+    openSite: function(s) {
+        var safeUrl = s.url.startsWith('http') ? s.url : 'https://' + s.url;
+        if (s.openMode === 'new') {
+            window.open(safeUrl, '_blank', 'noopener');
+        } else {
+            window.open(safeUrl, '_blank', 'noopener,noreferrer');
+        }
+        this.recordVisit(s);
+    },
+
+    openSiteFromElement: function(el) {
+        var url = el.getAttribute('data-url');
+        var mode = el.getAttribute('data-mode') || 'same';
+        if (url) this.openSite({ url: url, openMode: mode });
+    },
+
+    render: function() {
+        this.renderGroupsBar();
+        this.renderGrid();
+        this.updateBadge();
+    },
+
+    renderGroupsBar: function() {
+        var bar = document.getElementById('aig-groups-bar');
+        if (!bar) return;
+        bar.innerHTML = '';
+        for (var i = 0; i < this.data.groups.length; i++) {
+            var g = this.data.groups[i];
+            var btn = document.createElement('button');
+            btn.className = 'group-chip' + (this.activeGroup === g ? ' active' : '');
+            var icon = g === 'All Tools' ? '<i class="fa-solid fa-border-all"></i> ' : '';
+            btn.innerHTML = icon + this._esc(g);
+            btn.setAttribute('data-group', g);
+            btn.onclick = function() { aiGiant.setGroup(this.getAttribute('data-group')); };
+            bar.appendChild(btn);
+        }
+    },
+
+    setGroup: function(g) { this.activeGroup = g; this.render(); },
+
+    search: function(q) { this.searchQuery = q.toLowerCase(); this.renderGrid(); },
+
+    getFilteredShortcuts: function() {
+        var self = this;
+        return this.data.shortcuts.filter(function(s) {
+            var gm = self.activeGroup === 'All Tools' || s.group === self.activeGroup;
+            var sm = !self.searchQuery || s.name.toLowerCase().indexOf(self.searchQuery) !== -1 || (s.desc || '').toLowerCase().indexOf(self.searchQuery) !== -1 || (s.url || '').toLowerCase().indexOf(self.searchQuery) !== -1;
+            return gm && sm;
+        });
+    },
+
+    renderGrid: function() {
+        var grid = document.getElementById('aig-grid');
+        if (!grid) return;
+        var filtered = this.getFilteredShortcuts();
+        if (!filtered.length) {
+            var emptyMsg = !this.data.shortcuts.length ? 'Your AI Hub is empty' : 'No results';
+            var emptyHint = !this.data.shortcuts.length ? 'Click <strong>Add</strong> to add your first shortcut.' : 'Try a different search or group filter.';
+            grid.innerHTML = '<div class="aig-empty"><i class="fa-solid fa-rocket"></i><h3>' + emptyMsg + '</h3><p>' + emptyHint + '</p></div>';
+            return;
+        }
+        if (this.activeGroup === 'All Tools' && !this.searchQuery) {
+            var byGroup = {};
+            for (var i = 0; i < filtered.length; i++) {
+                var s = filtered[i];
+                if (!byGroup[s.group]) byGroup[s.group] = [];
+                byGroup[s.group].push(s);
+            }
+            Object.keys(byGroup).forEach(function(k) {
+                byGroup[k].sort(function(a, b) { return (b.priority ? 1 : 0) - (a.priority ? 1 : 0); });
+            });
+            var groupOrder = this.data.groups.filter(function(g) { return g !== 'All Tools'; });
+            var orderedGroups = groupOrder.filter(function(g) { return byGroup[g]; }).concat(
+                Object.keys(byGroup).filter(function(g) { return groupOrder.indexOf(g) === -1; })
+            );
+            grid.innerHTML = '';
+            for (var j = 0; j < orderedGroups.length; j++) {
+                var gn = orderedGroups[j];
+                var items = byGroup[gn];
+                var section = document.createElement('div');
+                section.className = 'group-section';
+                section.innerHTML = '<div class="group-section-title"><i class="fa-solid fa-folder" style="color:var(--accent)"></i> ' + this._esc(gn) + ' <span>' + items.length + ' item' + (items.length !== 1 ? 's' : '') + '</span></div>';
+                var innerGrid = document.createElement('div');
+                innerGrid.className = 'shortcuts-grid';
+                innerGrid.setAttribute('data-group', gn);
+                this.appendCards(innerGrid, items);
+                section.appendChild(innerGrid);
+                grid.appendChild(section);
+            }
+        } else {
+            var sorted = filtered.slice().sort(function(a, b) { return (b.priority ? 1 : 0) - (a.priority ? 1 : 0); });
+            grid.innerHTML = '';
+            var singleGrid = document.createElement('div');
+            singleGrid.className = 'shortcuts-grid';
+            singleGrid.setAttribute('data-group', this.activeGroup);
+            this.appendCards(singleGrid, sorted);
+            grid.appendChild(singleGrid);
+        }
+    },
+
+    appendCards: function(container, items) {
+        for (var i = 0; i < items.length; i++) {
+            container.appendChild(this.createCard(items[i]));
+        }
+    },
+
+    createCard: function(s) {
+        var self = this;
+        var card = document.createElement('div');
+        card.className = 'shortcut-card';
+        card.draggable = true;
+        card.setAttribute('data-id', s.id);
+        var safeUrl = s.url.startsWith('http') ? s.url : 'https://' + s.url;
+        card.setAttribute('data-url', safeUrl);
+        card.setAttribute('data-mode', s.openMode || 'same');
+
+        // Priority pin
+        if (s.priority) {
+            var pin = document.createElement('span');
+            pin.className = 'priority-pin';
+            pin.title = 'Priority';
+            pin.innerHTML = '<i class="fa-solid fa-star"></i>';
+            card.appendChild(pin);
+        }
+
+        // Action buttons
+        var actions = document.createElement('div');
+        actions.className = 'shortcut-actions';
+        var editBtn = document.createElement('button');
+        editBtn.className = 'sc-btn edit';
+        editBtn.title = 'Edit';
+        editBtn.innerHTML = '<i class="fa-solid fa-pen"></i>';
+        editBtn.onclick = function(e) { e.stopPropagation(); aiGiant.openEditModal(s.id); };
+        var delBtn = document.createElement('button');
+        delBtn.className = 'sc-btn';
+        delBtn.title = 'Delete';
+        delBtn.innerHTML = '<i class="fa-solid fa-trash"></i>';
+        delBtn.onclick = function(e) { e.stopPropagation(); aiGiant.deleteShortcut(s.id); };
+        actions.appendChild(editBtn);
+        actions.appendChild(delBtn);
+        card.appendChild(actions);
+
+        // Top section (favicon + name/url)
+        var top = document.createElement('div');
+        top.className = 'shortcut-card-top';
+        var fav = s.favicon || this.getFavicon(s.url);
+        if (fav) {
+            var img = document.createElement('img');
+            img.className = 'shortcut-logo';
+            img.src = fav;
+            img.alt = '';
+            img.onerror = function() {
+                var fb = document.createElement('div');
+                fb.className = 'shortcut-logo-fallback';
+                fb.textContent = (s.name || '?')[0].toUpperCase();
+                img.parentNode.replaceChild(fb, img);
+            };
+            top.appendChild(img);
+        } else {
+            var fb2 = document.createElement('div');
+            fb2.className = 'shortcut-logo-fallback';
+            fb2.textContent = (s.name || '?')[0].toUpperCase();
+            top.appendChild(fb2);
+        }
+        var info = document.createElement('div');
+        info.style.minWidth = '0';
+        info.innerHTML = '<div class="shortcut-name">' + this._esc(s.name) + '</div><div class="shortcut-url">' + this._esc(safeUrl) + '</div>';
+        top.appendChild(info);
+        card.appendChild(top);
+
+        // Description
+        if (s.desc) {
+            var descEl = document.createElement('div');
+            descEl.className = 'shortcut-desc';
+            descEl.textContent = s.desc;
+            card.appendChild(descEl);
+        }
+
+        // Badges
+        var badges = document.createElement('div');
+        badges.style.cssText = 'display:flex;align-items:center;gap:5px;flex-wrap:wrap;';
+        var groupBadge = document.createElement('span');
+        groupBadge.className = 'shortcut-badge';
+        groupBadge.textContent = s.group;
+        badges.appendChild(groupBadge);
+        if (s.openMode === 'new') {
+            var modeBadge = document.createElement('span');
+            modeBadge.className = 'shortcut-badge';
+            modeBadge.style.cssText = 'background:rgba(245,158,11,.1);color:var(--warning);border-color:rgba(245,158,11,.2);';
+            modeBadge.textContent = 'new window';
+            badges.appendChild(modeBadge);
+        }
+        card.appendChild(badges);
+
+        // Click handler
+        card.onclick = function() { aiGiant.openSiteFromElement(card); };
+
+        // Drag handlers
+        card.ondragstart = function(e) { self.dragStart(e); };
+        card.ondragend = function(e) { self.dragEnd(e); };
+        card.ondragover = function(e) { self.dragOver(e); };
+        card.ondrop = function(e) { self.drop(e); };
+        card.ondragleave = function(e) { self.dragLeave(e); };
+
+        return card;
+    },
+
+    // Drag and Drop
+    dragStart: function(e) {
+        var card = e.currentTarget;
+        this.dragSrcId = parseInt(card.getAttribute('data-id'));
+        card.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', String(this.dragSrcId));
+    },
+
+    dragEnd: function(e) {
+        e.currentTarget.classList.remove('dragging');
+        var cards = document.querySelectorAll('.shortcut-card');
+        for (var i = 0; i < cards.length; i++) cards[i].classList.remove('drag-over');
+    },
+
+    dragOver: function(e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        var card = e.currentTarget;
+        if (parseInt(card.getAttribute('data-id')) !== this.dragSrcId) card.classList.add('drag-over');
+    },
+
+    dragLeave: function(e) {
+        e.currentTarget.classList.remove('drag-over');
+    },
+
+    drop: function(e) {
+        e.preventDefault();
+        var targetId = parseInt(e.currentTarget.getAttribute('data-id'));
+        if (!targetId || targetId === this.dragSrcId) return;
+        e.currentTarget.classList.remove('drag-over');
+        var self = this;
+        var src = this.data.shortcuts.findIndex(function(s) { return s.id === self.dragSrcId; });
+        var tgt = this.data.shortcuts.findIndex(function(s) { return s.id === targetId; });
+        if (src === -1 || tgt === -1) return;
+        var item = this.data.shortcuts.splice(src, 1)[0];
+        this.data.shortcuts.splice(tgt, 0, item);
+        this.save();
+        this.renderGrid();
+    },
+
+    deleteShortcut: function(id) {
+        if (!confirm('Delete this shortcut?')) return;
+        this.data.shortcuts = this.data.shortcuts.filter(function(s) { return s.id !== id; });
+        this.save();
+        this.render();
+        ui.toast('Shortcut removed');
+    },
+
+    _populateGroupSelect: function() {
+        var sel = document.getElementById('sc-group');
+        sel.innerHTML = '';
+        var groups = this.data.groups.filter(function(g) { return g !== 'All Tools'; });
+        for (var i = 0; i < groups.length; i++) {
+            var opt = document.createElement('option');
+            opt.value = groups[i];
+            opt.textContent = groups[i];
+            sel.appendChild(opt);
+        }
+    },
+
+    openAddModal: function() {
+        document.getElementById('sc-edit-id').value = '';
+        document.getElementById('add-modal-title').innerHTML = '<i class="fa-solid fa-plus" style="color:var(--accent);"></i> Add Shortcut';
+        document.getElementById('add-modal-btn-label').textContent = 'Add Shortcut';
+        document.getElementById('sc-name').value = '';
+        document.getElementById('sc-url').value = '';
+        document.getElementById('sc-desc').value = '';
+        document.getElementById('sc-priority').checked = false;
+        document.getElementById('sc-open-mode').value = 'same';
+        document.getElementById('sc-favicon-preview').innerHTML = '<i class="fa-solid fa-globe" style="color:var(--text-muted);font-size:13px;"></i>';
+        this._populateGroupSelect();
+        document.getElementById('add-shortcut-modal').style.display = 'flex';
+        setTimeout(function() { document.getElementById('sc-name').focus(); }, 100);
+    },
+
+    openEditModal: function(id) {
+        var s = this.data.shortcuts.find(function(x) { return x.id === id; });
+        if (!s) return;
+        document.getElementById('sc-edit-id').value = id;
+        document.getElementById('add-modal-title').innerHTML = '<i class="fa-solid fa-pen" style="color:var(--accent);"></i> Edit Shortcut';
+        document.getElementById('add-modal-btn-label').textContent = 'Save Changes';
+        document.getElementById('sc-name').value = s.name;
+        document.getElementById('sc-url').value = s.url;
+        document.getElementById('sc-desc').value = s.desc || '';
+        document.getElementById('sc-priority').checked = !!s.priority;
+        document.getElementById('sc-open-mode').value = s.openMode || 'same';
+        this._populateGroupSelect();
+        document.getElementById('sc-group').value = s.group;
+        this.previewFavicon();
+        document.getElementById('add-shortcut-modal').style.display = 'flex';
+    },
+
+    closeAddModal: function() { document.getElementById('add-shortcut-modal').style.display = 'none'; },
+
+    saveShortcut: function() {
+        var name = document.getElementById('sc-name').value.trim();
+        var url = document.getElementById('sc-url').value.trim();
+        var desc = document.getElementById('sc-desc').value.trim();
+        var group = document.getElementById('sc-group').value;
+        var priority = document.getElementById('sc-priority').checked;
+        var openMode = document.getElementById('sc-open-mode').value;
+        var editId = document.getElementById('sc-edit-id').value;
+        if (!name) { ui.toast('Please enter a name', 'error'); return; }
+        if (!url) { ui.toast('Please enter a URL', 'error'); return; }
+        var cleanUrl = url.startsWith('http') ? url : 'https://' + url;
+        if (editId) {
+            var idx = this.data.shortcuts.findIndex(function(s) { return s.id === parseInt(editId); });
+            if (idx !== -1) {
+                Object.assign(this.data.shortcuts[idx], {
+                    name: name, url: cleanUrl, desc: desc, group: group,
+                    priority: priority, openMode: openMode,
+                    favicon: this.getFavicon(cleanUrl),
+                    updatedAt: new Date().toISOString()
+                });
+                ui.toast('"' + name + '" updated');
+            }
+        } else {
+            this.data.shortcuts.push({
+                id: Date.now(), name: name, url: cleanUrl, desc: desc, group: group,
+                priority: priority, openMode: openMode,
+                favicon: this.getFavicon(cleanUrl),
+                added: new Date().toISOString()
+            });
+            ui.toast('"' + name + '" added to ' + group, 'success');
+        }
+        this.save();
+        this.closeAddModal();
+        this.render();
+    },
+
+    // Groups
+    openGroupsModal: function() {
+        this.renderGroupsList();
+        document.getElementById('groups-modal').style.display = 'flex';
+    },
+
+    closeGroupsModal: function() {
+        document.getElementById('groups-modal').style.display = 'none';
+        this.render();
+    },
+
+    renderGroupsList: function() {
+        var list = document.getElementById('groups-list');
+        var userGroups = this.data.groups.filter(function(g) { return g !== 'All Tools'; });
+        if (!userGroups.length) {
+            list.innerHTML = '<div style="text-align:center;color:var(--text-muted);font-size:12px;padding:18px;">No groups yet</div>';
+            return;
+        }
+        list.innerHTML = '';
+        for (var i = 0; i < userGroups.length; i++) {
+            (function(g) {
+                var cnt = aiGiant.data.shortcuts.filter(function(s) { return s.group === g; }).length;
+                var item = document.createElement('div');
+                item.className = 'group-manage-item';
+                item.innerHTML = '<span><i class="fa-solid fa-folder" style="color:var(--accent);margin-right:7px;"></i>' + aiGiant._esc(g) + '<span style="color:var(--text-muted);font-size:10px;margin-left:5px;">(' + cnt + ')</span></span>';
+                var delBtn = document.createElement('button');
+                delBtn.className = 'delete-group-btn';
+                delBtn.setAttribute('data-group', g);
+                delBtn.innerHTML = '<i class="fa-solid fa-trash"></i>';
+                delBtn.onclick = function() { aiGiant.deleteGroup(g); };
+                item.appendChild(delBtn);
+                list.appendChild(item);
+            })(userGroups[i]);
+        }
+    },
+
+    createGroup: function() {
+        var inp = document.getElementById('new-group-name');
+        var name = inp.value.trim();
+        if (!name) return;
+        if (this.data.groups.indexOf(name) !== -1) { ui.toast('Group already exists'); return; }
+        this.data.groups.push(name);
+        inp.value = '';
+        this.save();
+        this.renderGroupsList();
+        ui.toast('Group "' + name + '" created', 'success');
+    },
+
+    deleteGroup: function(name) {
+        var cnt = this.data.shortcuts.filter(function(s) { return s.group === name; }).length;
+        if (cnt > 0 && !confirm('Delete group "' + name + '"? The ' + cnt + ' shortcut(s) will be moved to Tech.')) return;
+        this.data.shortcuts.forEach(function(s) { if (s.group === name) s.group = 'Tech'; });
+        this.data.groups = this.data.groups.filter(function(g) { return g !== name; });
+        if (this.activeGroup === name) this.activeGroup = 'All Tools';
+        this.save();
+        this.renderGroupsList();
+        ui.toast('Group "' + name + '" deleted');
+    },
+
+    // API Keys
+    PROVIDERS: [
+        { id:'openai', name:'OpenAI', icon:'fa-robot', placeholder:'sk-...' },
+        { id:'anthropic', name:'Anthropic', icon:'fa-brain', placeholder:'sk-ant-...' },
+        { id:'google', name:'Google (Gemini)', icon:'fa-google', placeholder:'AIza...' },
+        { id:'deepseek', name:'DeepSeek', icon:'fa-microchip', placeholder:'sk-...' },
+        { id:'mistral', name:'Mistral AI', icon:'fa-wind', placeholder:'API Key...' },
+        { id:'groq', name:'Groq', icon:'fa-bolt', placeholder:'gsk_...' },
+        { id:'cohere', name:'Cohere', icon:'fa-wave-square', placeholder:'API Key...' },
+        { id:'perplexity', name:'Perplexity', icon:'fa-magnifying-glass', placeholder:'pplx-...' }
+    ],
+
+    openApiKeysModal: function() {
+        this.renderApiKeysList();
+        document.getElementById('api-keys-modal').style.display = 'flex';
+    },
+
+    closeApiKeysModal: function() {
+        document.getElementById('api-keys-modal').style.display = 'none';
+    },
+
+    renderApiKeysList: function() {
+        var list = document.getElementById('api-keys-list');
+        list.innerHTML = '';
+        for (var i = 0; i < this.PROVIDERS.length; i++) {
+            (function(p) {
+                var val = aiGiant.data.apiKeys[p.id] || '';
+                var isSet = val.length > 0;
+                var row = document.createElement('div');
+                row.className = 'api-key-row';
+                row.innerHTML = '<div class="api-key-row-header"><div class="api-provider-name"><i class="fa-solid ' + p.icon + '" style="color:var(--accent);"></i> ' + p.name + '</div><span class="api-status ' + (isSet ? 'set' : 'unset') + '">' + (isSet ? '&#10003; Set' : 'Not Set') + '</span></div>';
+                var input = document.createElement('input');
+                input.type = 'password';
+                input.className = 'form-input';
+                input.id = 'apikey-' + p.id;
+                input.placeholder = p.placeholder;
+                input.value = val;
+                input.oninput = function() {
+                    var badge = row.querySelector('.api-status');
+                    badge.className = 'api-status ' + (input.value.length ? 'set' : 'unset');
+                    badge.textContent = input.value.length ? '\u2713 Set' : 'Not Set';
+                };
+                row.appendChild(input);
+                list.appendChild(row);
+            })(this.PROVIDERS[i]);
+        }
+        var cps = this.data.customProviders || [];
+        for (var j = 0; j < cps.length; j++) {
+            (function(cp, idx) {
+                var row = document.createElement('div');
+                row.className = 'api-key-row';
+                row.innerHTML = '<div class="api-key-row-header"><div class="api-provider-name"><i class="fa-solid fa-cube" style="color:var(--accent);"></i> ' + aiGiant._esc(cp.name) + '</div></div>';
+                var removeBtn = document.createElement('button');
+                removeBtn.style.cssText = 'background:transparent;border:none;color:var(--text-muted);cursor:pointer;font-size:11px;';
+                removeBtn.textContent = 'Remove';
+                removeBtn.onclick = function() { aiGiant.removeCustomProvider(idx); };
+                row.querySelector('.api-key-row-header').appendChild(removeBtn);
+                var input = document.createElement('input');
+                input.type = 'password';
+                input.className = 'form-input';
+                input.id = 'apikey-custom-' + idx;
+                input.placeholder = 'API Key...';
+                input.value = cp.key;
+                row.appendChild(input);
+                list.appendChild(row);
+            })(cps[j], j);
+        }
+    },
+
+    saveApiKeys: function() {
+        for (var i = 0; i < this.PROVIDERS.length; i++) {
+            var p = this.PROVIDERS[i];
+            var el = document.getElementById('apikey-' + p.id);
+            if (el) this.data.apiKeys[p.id] = el.value.trim();
+        }
+        var cn = document.getElementById('custom-provider-name').value.trim();
+        var ck = document.getElementById('custom-provider-key').value.trim();
+        if (cn && ck) {
+            if (!this.data.customProviders) this.data.customProviders = [];
+            this.data.customProviders.push({ name: cn, key: ck });
+            document.getElementById('custom-provider-name').value = '';
+            document.getElementById('custom-provider-key').value = '';
+        }
+        this.save();
+        this.closeApiKeysModal();
+        ui.toast('API Keys saved', 'success');
+    },
+
+    removeCustomProvider: function(i) {
+        this.data.customProviders.splice(i, 1);
+        this.save();
+        this.renderApiKeysList();
+    },
+
+    /* ---- SESSION EXPORT / RESUME ---- */
+    getExportData: function() {
+        return {
+            _schemaVersion: SCHEMA_VERSION,
+            _exportedAt: new Date().toISOString(),
+            _tool: 'AI Giant Session',
+            shortcuts: this.data.shortcuts,
+            groups: this.data.groups,
+            apiKeys: this.data.apiKeys,
+            customProviders: this.data.customProviders || [],
+            visitHistory: this.data.visitHistory || [],
+            sync: { gistToken: gistSync.token, gistId: gistSync.gistId },
+            settings: { customEndpoint: state.settings.customEndpoint },
+            meta: {
+                shortcutCount: this.data.shortcuts.length,
+                groupCount: this.data.groups.length,
+                historyCount: (this.data.visitHistory || []).length,
+                keysSet: Object.values(this.data.apiKeys || {}).filter(function(v) { return v; }).length
+            }
+        };
+    },
+
+    exportSession: function() {
+        var payload = this.getExportData();
+        var blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        var d = new Date();
+        var date = d.toISOString().split('T')[0];
+        var time = d.getHours().toString().padStart(2, '0') + d.getMinutes().toString().padStart(2, '0');
+        a.download = 'ai-giant-session-' + date + '-' + time + '.json';
+        a.click();
+        URL.revokeObjectURL(a.href);
+        ui.toast('Session exported: ' + payload.meta.shortcutCount + ' shortcuts, ' + payload.meta.keysSet + ' keys', 'success');
+    },
+
+    importSession: function() {
+        var input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json,application/json';
+        input.onchange = function(e) {
+            var file = e.target.files[0];
+            if (!file) return;
+            var reader = new FileReader();
+            reader.onload = function(ev) {
+                try {
+                    var parsed = JSON.parse(ev.target.result);
+                    if (!parsed.shortcuts || !Array.isArray(parsed.shortcuts)) {
+                        ui.toast('Invalid session file', 'error');
+                        return;
+                    }
+                    aiGiant._pendingImport = parsed;
+                    aiGiant.showSessionPreview(parsed);
+                } catch(err) { ui.toast('Could not parse session file', 'error'); }
+            };
+            reader.readAsText(file);
+        };
+        input.click();
+    },
+
+    showSessionPreview: function(parsed) {
+        var info = document.getElementById('session-import-info');
+        var date = parsed._exportedAt ? new Date(parsed._exportedAt).toLocaleString() : 'Unknown';
+        var m = parsed.meta || {};
+        var shortcutCount = m.shortcutCount || parsed.shortcuts.length;
+        var groupCount = m.groupCount || (parsed.groups || []).length;
+        var keysSet = m.keysSet || Object.values(parsed.apiKeys || {}).filter(function(v) { return v; }).length;
+        info.innerHTML = '<div style="background:var(--bg-app);border:1px solid var(--border);border-radius:7px;padding:13px;margin-bottom:13px;">' +
+            '<div style="font-size:11px;color:var(--text-muted);margin-bottom:9px;"><i class="fa-solid fa-file-code" style="color:var(--accent);"></i> Session Snapshot</div>' +
+            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;font-size:12px;">' +
+            '<div>&#128230; Shortcuts: <strong>' + shortcutCount + '</strong></div>' +
+            '<div>&#128193; Groups: <strong>' + groupCount + '</strong></div>' +
+            '<div>&#128273; API Keys: <strong>' + keysSet + ' set</strong></div>' +
+            '<div>&#128197; Exported: <strong style="font-size:10px;">' + date + '</strong></div>' +
+            '</div></div>' +
+            '<div style="font-size:11px;color:var(--text-muted);margin-bottom:11px;">This will <strong style="color:var(--text-main);">fully replace</strong> your current local session with the imported snapshot. Your current data will be backed up in localStorage as <code style="background:rgba(255,255,255,.05);padding:2px 4px;border-radius:3px;">aig_v6_backup</code>.</div>';
+        document.getElementById('session-import-modal').style.display = 'flex';
+    },
+
+    confirmSessionImport: function() {
+        var parsed = this._pendingImport;
+        if (!parsed) return;
+        localStorage.setItem('aig_v6_backup', localStorage.getItem('aig_v6') || '{}');
+        this.data = Object.assign({}, JSON.parse(JSON.stringify(this.DEFAULT_DATA)), parsed, { _schemaVersion: SCHEMA_VERSION });
+        if (this.data.groups.indexOf('All Tools') === -1) this.data.groups.unshift('All Tools');
+        if (!this.data.visitHistory) this.data.visitHistory = [];
+        if (!this.data.customProviders) this.data.customProviders = [];
+        if (parsed.settings) {
+            state.settings.customEndpoint = parsed.settings.customEndpoint || state.settings.customEndpoint;
+            localStorage.setItem('aig_settings', JSON.stringify(state.settings));
+        }
+        if (parsed.sync) {
+            if (parsed.sync.gistToken && parsed.sync.gistId) {
+                gistSync.token = parsed.sync.gistToken;
+                gistSync.gistId = parsed.sync.gistId;
+                gistSync.saveState();
+                gistSync.updateUI();
+                document.getElementById('gist-token').value = parsed.sync.gistToken;
+                document.getElementById('gist-id').value = parsed.sync.gistId;
+            }
+        }
+        this.save();
+        document.getElementById('session-import-modal').style.display = 'none';
+        this.activeGroup = 'All Tools';
+        this.render();
+        ui.toast('Session resumed successfully! Previous session backed up.', 'success');
+    },
+
+    mergeImportData: function(parsed, silent) {
+        if (!parsed || !parsed.shortcuts) return;
+        var self = this;
+        (parsed.groups || []).forEach(function(g) { if (self.data.groups.indexOf(g) === -1) self.data.groups.push(g); });
+        var existingUrls = new Set(this.data.shortcuts.map(function(s) { return s.url; }));
+        var added = 0;
+        (parsed.shortcuts || []).forEach(function(s) {
+            if (!existingUrls.has(s.url)) {
+                self.data.shortcuts.push(Object.assign({}, s, { id: Date.now() + Math.random() }));
+                existingUrls.add(s.url);
+                added++;
+            }
+        });
+        Object.keys(parsed.apiKeys || {}).forEach(function(k) {
+            var v = parsed.apiKeys[k];
+            if (v && !self.data.apiKeys[k]) self.data.apiKeys[k] = v;
+        });
+        var incomingHist = (parsed.visitHistory || []).filter(function(v) {
+            return !self.data.visitHistory.find(function(h) { return h.url === v.url; });
+        });
+        this.data.visitHistory = incomingHist.concat(this.data.visitHistory).slice(0, 200);
+        var existingCustom = new Set((this.data.customProviders || []).map(function(c) { return c.name; }));
+        (parsed.customProviders || []).forEach(function(c) {
+            if (!existingCustom.has(c.name)) self.data.customProviders.push(c);
+        });
+        this.save();
+        this.render();
+        if (!silent) ui.toast('Merged: ' + added + ' new shortcuts added', 'success');
+    }
+};
+
+/* ===== UI & APP ===== */
+var ui = {
+    showSettings: function() {
+        document.getElementById('settings-modal').style.display = 'flex';
+        document.getElementById('gist-token').value = state.settings.gistToken;
+        document.getElementById('gist-id').value = state.settings.gistId;
+        document.getElementById('custom-endpoint').value = state.settings.customEndpoint;
+    },
+    hideSettings: function() {
+        document.getElementById('settings-modal').style.display = 'none';
+    },
+    hideModal: function(id) {
+        var el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+    },
+    toast: function(msg, type) {
+        var d = document.createElement('div');
+        d.className = 'toast' + (type ? ' ' + type : '');
+        d.innerText = msg;
+        document.body.appendChild(d);
+        setTimeout(function() { d.remove(); }, 3500);
+    }
+};
+
+var app = {
+    init: function() {
+        var savedTheme = localStorage.getItem('aig_theme');
+        if (savedTheme) document.body.setAttribute('data-theme', savedTheme);
+        var savedSettings = localStorage.getItem('aig_settings');
+        if (savedSettings) {
+            try { state.settings = Object.assign({}, state.settings, JSON.parse(savedSettings)); } catch(e) {}
+        }
+        aiGiant.init();
+    },
+    saveSettings: function() {
+        state.settings.gistToken = document.getElementById('gist-token').value.trim();
+        state.settings.gistId = document.getElementById('gist-id').value.trim();
+        state.settings.customEndpoint = document.getElementById('custom-endpoint').value.trim();
+        localStorage.setItem('aig_settings', JSON.stringify(state.settings));
+        ui.hideSettings();
+        ui.toast('Configuration saved', 'success');
+    }
+};
+
+/* ===== BOOT & EVENTS ===== */
+window.onload = function() { app.init(); privacyLock.init(); };
+
+// Click outside modal to close
+var modalIds = ['add-shortcut-modal', 'groups-modal', 'api-keys-modal', 'session-import-modal', 'settings-modal'];
+modalIds.forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) {
+        el.addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.style.display = 'none';
+                if (id === 'groups-modal') aiGiant.render();
+            }
+        });
+    }
+});
+
+// Escape key closes modals
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        aiGiant.closeAddModal();
+        aiGiant.closeGroupsModal();
+        aiGiant.closeApiKeysModal();
+        ui.hideModal('session-import-modal');
+        ui.hideModal('settings-modal');
+        var hbox = document.getElementById('history-results');
+        if (hbox) hbox.style.display = 'none';
+    }
+});
+
+// Click outside history results to close
+document.addEventListener('click', function(e) {
+    var hbox = document.getElementById('history-results');
+    var search = document.getElementById('aig-history-search');
+    if (hbox && !hbox.contains(e.target) && e.target !== search) {
+        hbox.style.display = 'none';
+    }
+});
+</script>
+</body>
+</html>
