@@ -1,2155 +1,1402 @@
+html
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Giant — SubarnaZen Nexus</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <style>
-        :root {
-            --bg-app: #0c0e12; --bg-panel: #13161c; --bg-panel-glass: rgba(19, 22, 28, 0.97);
-            --border: #242830; --accent: #3b82f6; --accent-hover: #2563eb; --accent-glow: rgba(59, 130, 246, 0.18);
-            --text-main: #dde3ee; --text-muted: #6b7694; --success: #10b981; --warning: #f59e0b; --danger: #ef4444;
-            --radius: 8px; --font-ui: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            --scrollbar-track: #13161c; --scrollbar-thumb: #2a2e38;
-        }
-        [data-theme="light"] {
-            --bg-app: #f1f4f9; --bg-panel: #ffffff; --bg-panel-glass: rgba(255,255,255,0.97);
-            --border: #dde3ef; --text-main: #1a2035; --text-muted: #64748b; --accent-glow: rgba(59,130,246,0.1);
-            --scrollbar-track: #f1f4f9; --scrollbar-thumb: #c4c9d4;
-        }
-        * { box-sizing: border-box; }
-        :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-        body { margin:0; padding:0; background:var(--bg-app); color:var(--text-main); font-family:var(--font-ui); height:100vh; overflow:hidden; display:flex; flex-direction:column; }
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AI Giant — SubarnaZen Nexus</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg-root: #0d0f14;
+  --bg-app: #13161e;
+  --bg-card: #181c26;
+  --bg-hover: #1e2330;
+  --border: #262c3d;
+  --border-light: #1e2330;
+  --text: #e8eaf0;
+  --text-muted: #6b7280;
+  --text-dim: #9ca3af;
+  --accent: #6ee7b7;
+  --accent-dim: rgba(110,231,183,0.12);
+  --accent2: #818cf8;
+  --accent2-dim: rgba(129,140,248,0.12);
+  --danger: #f87171;
+  --danger-dim: rgba(248,113,113,0.12);
+  --success: #34d399;
+  --warning: #fbbf24;
+  --priority: #fbbf24;
+  --radius: 10px;
+  --radius-sm: 6px;
+  --shadow: 0 4px 24px rgba(0,0,0,0.4);
+  --font-ui: 'Syne', sans-serif;
+  --font-mono: 'Space Mono', monospace;
+}
 
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width:6px; height:6px; }
-        ::-webkit-scrollbar-track { background:var(--scrollbar-track); }
-        ::-webkit-scrollbar-thumb { background:var(--scrollbar-thumb); border-radius:3px; }
-        ::-webkit-scrollbar-thumb:hover { background:var(--accent); }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-        /* Header */
-        header { height:48px; background:var(--bg-panel); border-bottom:1px solid var(--border); display:flex; align-items:center; padding:0 16px; justify-content:space-between; z-index:100; flex-shrink:0; }
-        .brand { font-weight:800; font-size:15px; letter-spacing:-.5px; display:flex; align-items:center; gap:8px; color:var(--accent); }
-        .brand small { font-size:10px; font-weight:400; color:var(--text-muted); margin-left:3px; }
-        .header-actions { display:flex; gap:6px; align-items:center; }
-        .btn-icon { background:transparent; border:none; color:var(--text-muted); cursor:pointer; padding:6px 10px; border-radius:5px; transition:.15s; font-size:13px; display:inline-flex; align-items:center; gap:6px; font-family:var(--font-ui); }
-        .btn-icon:hover { background:rgba(255,255,255,0.06); color:var(--text-main); }
-        [data-theme="light"] .btn-icon:hover { background:rgba(0,0,0,0.04); }
-        .btn-primary { background:var(--accent); color:white; border:none; padding:6px 14px; border-radius:5px; font-size:12px; font-weight:600; cursor:pointer; transition:.15s; display:inline-flex; align-items:center; gap:6px; font-family:var(--font-ui); }
-        .btn-primary:hover { background:var(--accent-hover); }
-        .btn-danger { background:var(--danger); color:white; border:none; padding:6px 14px; border-radius:5px; font-size:12px; font-weight:600; cursor:pointer; transition:.15s; display:inline-flex; align-items:center; gap:6px; font-family:var(--font-ui); }
-        .sep { width:1px; height:20px; background:var(--border); margin:0 6px; }
+body {
+  font-family: var(--font-ui);
+  background: var(--bg-root);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
 
-        /* Toolbar */
-        .aig-toolbar { padding:10px 18px; background:var(--bg-panel); border-bottom:1px solid var(--border); display:flex; align-items:center; gap:8px; flex-shrink:0; flex-wrap:wrap; }
-        .aig-search { flex:1; min-width:180px; max-width:360px; background:var(--bg-app); border:1px solid var(--border); color:var(--text-main); padding:7px 12px 7px 32px; border-radius:6px; font-size:12px; font-family:var(--font-ui); transition:.15s; }
-        .aig-search:focus { border-color:var(--accent); }
-        .search-wrapper { position:relative; flex:1; min-width:180px; max-width:360px; }
-        .search-wrapper i { position:absolute; left:10px; top:50%; transform:translateY(-50%); color:var(--text-muted); font-size:11px; pointer-events:none; }
-        .sync-status { display:flex; align-items:center; gap:6px; font-size:11px; color:var(--text-muted); background:var(--bg-app); border:1px solid var(--border); padding:4px 10px; border-radius:5px; white-space:nowrap; }
-        .sync-status.connected { border-color:rgba(16,185,129,.4); color:var(--success); background:rgba(16,185,129,.08); }
-        .sync-status i { font-size:13px; }
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
-        /* History Bar */
-        .aig-history-bar { padding:6px 18px; background:var(--bg-app); border-bottom:1px solid var(--border); display:flex; align-items:center; gap:8px; flex-shrink:0; }
-        .aig-history-bar input { flex:1; max-width:320px; background:var(--bg-panel); border:1px solid var(--border); color:var(--text-main); padding:6px 10px; border-radius:5px; font-size:11px; font-family:var(--font-ui); transition:.15s; }
-        .aig-history-bar input:focus { border-color:var(--accent); }
-        .history-results { position:absolute; top:100%; left:0; right:0; background:var(--bg-panel); border:1px solid var(--border); border-radius:6px; z-index:300; max-height:220px; overflow-y:auto; box-shadow:0 8px 24px rgba(0,0,0,.4); display:none; }
-        .history-result-item { padding:8px 12px; cursor:pointer; font-size:12px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:8px; transition:.1s; }
-        .history-result-item:hover { background:var(--accent-glow); }
-        .history-result-item:last-child { border-bottom:none; }
-        .aig-history-wrapper { position:relative; flex:1; max-width:320px; }
+/* ── WELCOME SCREEN ── */
+.welcome-screen {
+  position: fixed; inset: 0; background: var(--bg-root);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000; padding: 20px;
+}
+.welcome-screen.hidden { display: none; }
 
-        /* Groups Bar */
-        .aig-groups-bar { padding:8px 18px; background:var(--bg-panel); border-bottom:1px solid var(--border); display:flex; align-items:center; gap:5px; overflow-x:auto; flex-shrink:0; }
-        .aig-groups-bar::-webkit-scrollbar { height:0; }
-        .group-chip { padding:4px 14px; border-radius:20px; border:1px solid var(--border); background:transparent; color:var(--text-muted); cursor:pointer; font-size:11px; font-weight:600; white-space:nowrap; transition:.15s; font-family:var(--font-ui); }
-        .group-chip:hover { border-color:var(--accent); color:var(--text-main); }
-        .group-chip.active { background:var(--accent); border-color:var(--accent); color:white; }
+.welcome-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 36px;
+  width: 100%; max-width: 480px;
+  box-shadow: var(--shadow);
+}
+.wc-icon {
+  width: 52px; height: 52px;
+  background: var(--accent-dim);
+  border: 1px solid var(--accent);
+  border-radius: 14px;
+  margin-bottom: 18px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 26px;
+}
+.welcome-card h2 {
+  font-size: 22px; font-weight: 800; margin-bottom: 6px; color: var(--text);
+}
+.wc-sub { font-size: 13px; color: var(--text-muted); margin-bottom: 24px; }
+.welcome-or { text-align: center; color: var(--text-muted); font-size: 12px; margin: 16px 0; position: relative; }
+.welcome-or::before, .welcome-or::after {
+  content: ''; position: absolute; top: 50%; width: 42%; height: 1px; background: var(--border);
+}
+.welcome-or::before { left: 0; }
+.welcome-or::after { right: 0; }
+.welcome-actions { display: flex; gap: 9px; flex-direction: column; }
 
-        /* Content Area */
-        .aig-content { flex:1; overflow-y:auto; padding:22px; }
-        .shortcuts-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(190px,1fr)); gap:12px; }
+/* ── LOCK SCREEN ── */
+.lock-screen {
+  position: fixed; inset: 0; background: var(--bg-root);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 999; padding: 20px;
+}
+.lock-screen.hidden { display: none; }
+.lock-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 36px; width: 100%; max-width: 380px;
+  text-align: center; box-shadow: var(--shadow);
+}
+.lock-icon {
+  width: 52px; height: 52px; background: var(--accent2-dim);
+  border: 1px solid var(--accent2); border-radius: 14px;
+  margin: 0 auto 18px; display: flex; align-items: center; justify-content: center;
+  font-size: 24px;
+}
+.lock-card h2 { font-size: 20px; font-weight: 800; margin-bottom: 8px; }
+.lock-card p { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; }
+.lock-error { color: var(--danger); font-size: 12px; margin-top: 10px; display: none; }
 
-        /* Shortcut Cards */
-        .shortcut-card { background:var(--bg-panel); border:1px solid var(--border); border-radius:10px; padding:14px; cursor:grab; transition:.2s; position:relative; display:flex; flex-direction:column; gap:8px; text-decoration:none; color:inherit; user-select:none; }
-        .shortcut-card:hover { border-color:var(--accent); transform:translateY(-2px); box-shadow:0 8px 22px rgba(59,130,246,.13); }
-        .shortcut-card.drag-over { border-color:var(--accent); background:var(--accent-glow); transform:scale(1.03); }
-        .shortcut-card.dragging { opacity:.4; transform:scale(.97); }
-        .shortcut-card-top { display:flex; align-items:center; gap:9px; }
-        .shortcut-logo { width:36px; height:36px; border-radius:7px; object-fit:contain; background:rgba(255,255,255,.06); padding:3px; flex-shrink:0; }
-        .shortcut-logo-fallback { width:36px; height:36px; border-radius:7px; background:var(--accent); display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:700; color:white; flex-shrink:0; }
-        .shortcut-name { font-size:12px; font-weight:700; color:var(--text-main); line-height:1.3; }
-        .shortcut-url { font-size:10px; color:var(--text-muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:120px; }
-        .shortcut-desc { font-size:11px; color:var(--text-muted); line-height:1.4; }
-        .shortcut-badge { font-size:9px; padding:2px 7px; border-radius:10px; background:var(--accent-glow); color:var(--accent); align-self:flex-start; border:1px solid rgba(59,130,246,.18); }
-        .shortcut-actions { position:absolute; top:7px; right:7px; display:flex; gap:3px; opacity:0; transition:.15s; }
-        .shortcut-card:hover .shortcut-actions { opacity:1; }
-        .sc-btn { background:rgba(0,0,0,.45); border:none; color:var(--text-muted); cursor:pointer; padding:3px 6px; border-radius:4px; font-size:10px; transition:.15s; }
-        .sc-btn:hover { background:var(--danger); color:white; }
-        .sc-btn.edit:hover { background:var(--accent); color:white; }
-        .priority-pin { position:absolute; top:6px; left:6px; color:var(--warning); font-size:10px; animation:pulse 2s infinite; }
-        @keyframes pulse { 0%, 100% { opacity:1; } 50% { opacity:.5; } }
+/* ── HEADER ── */
+.aig-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-app);
+  position: sticky; top: 0; z-index: 50;
+}
+.brand { font-size: 18px; font-weight: 800; color: var(--text); letter-spacing: -0.3px; }
+.brand .small { font-size: 11px; font-weight: 400; color: var(--text-muted); margin-left: 6px; font-family: var(--font-mono); }
+.header-actions { display: flex; align-items: center; gap: 8px; }
+.sync-status {
+  font-size: 11px; color: var(--text-muted); font-family: var(--font-mono);
+  padding: 3px 8px; background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 5px; cursor: pointer;
+}
+.sync-status.connected { color: var(--accent); border-color: var(--accent); }
+.sep { width: 1px; height: 16px; background: var(--border); }
 
-        /* Group Sections */
-        .group-section { margin-bottom:28px; }
-        .group-section-title { font-size:10px; text-transform:uppercase; letter-spacing:1.2px; color:var(--text-muted); font-weight:700; margin:0 0 10px 0; padding-bottom:7px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:7px; }
+/* ── TOOLBAR ── */
+.aig-toolbar {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 20px; background: var(--bg-app);
+  border-bottom: 1px solid var(--border); flex-wrap: wrap;
+}
+.search-wrapper { position: relative; flex: 1; min-width: 160px; }
+.search-wrapper input {
+  width: 100%; background: var(--bg-root); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 7px 10px 7px 32px;
+  color: var(--text); font-size: 13px; font-family: var(--font-ui);
+  outline: none; transition: border-color .2s;
+}
+.search-wrapper input:focus { border-color: var(--accent); }
+.search-wrapper::before {
+  content: '🔍'; position: absolute; left: 9px; top: 50%; transform: translateY(-50%);
+  font-size: 12px; pointer-events: none;
+}
+.toolbar-count { font-size: 11px; color: var(--text-muted); margin-left: auto; white-space: nowrap; }
 
-        /* Empty State */
-        .aig-empty { text-align:center; padding:50px 20px; color:var(--text-muted); }
-        .aig-empty i.empty-icon { font-size:48px; opacity:.12; margin-bottom:16px; display:block; }
-        .aig-empty h3 { font-size:16px; margin:0 0 8px 0; color:var(--text-main); }
-        .aig-empty p { font-size:12px; }
-        .restore-options { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-top:20px; }
-        .restore-card { background:var(--bg-panel); border:1px solid var(--border); border-radius:10px; padding:20px; width:200px; text-align:center; cursor:pointer; transition:.2s; }
-        .restore-card:hover { border-color:var(--accent); transform:translateY(-2px); box-shadow:0 8px 22px rgba(59,130,246,.13); }
-        .restore-card i { font-size:28px; color:var(--accent); margin-bottom:10px; display:block; }
-        .restore-card .rc-title { font-size:13px; font-weight:700; color:var(--text-main); margin-bottom:4px; }
-        .restore-card .rc-desc { font-size:11px; color:var(--text-muted); line-height:1.4; }
+/* ── HISTORY BAR ── */
+.aig-history-bar {
+  padding: 8px 20px; background: var(--bg-app); border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 10px;
+}
+.history-results { display: flex; gap: 6px; flex-wrap: wrap; flex: 1; }
+.history-chip {
+  font-size: 11px; background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 5px; padding: 3px 8px; color: var(--text-dim); cursor: pointer;
+  text-decoration: none; transition: border-color .15s, color .15s;
+  font-family: var(--font-mono); white-space: nowrap; max-width: 160px; overflow: hidden; text-overflow: ellipsis;
+}
+.history-chip:hover { border-color: var(--accent); color: var(--accent); }
+.history-label { font-size: 10px; color: var(--text-muted); white-space: nowrap; }
 
-        /* Welcome Screen */
-        .welcome-screen { position:fixed; top:0; left:0; width:100%; height:100%; background:var(--bg-app); z-index:8888; display:flex; align-items:center; justify-content:center; }
-        .welcome-screen.hidden { display:none !important; }
-        .welcome-card { background:var(--bg-panel); border:1px solid var(--border); border-radius:12px; padding:36px; width:480px; max-width:92vw; text-align:center; box-shadow:0 16px 40px rgba(0,0,0,.5); }
-        .welcome-card .wc-icon { font-size:48px; color:var(--accent); margin-bottom:14px; }
-        .welcome-card h2 { font-size:20px; margin:0 0 6px 0; }
-        .welcome-card .wc-sub { font-size:12px; color:var(--text-muted); margin-bottom:24px; }
-        .welcome-card .form-input { margin-bottom:12px; }
-        .welcome-actions { display:flex; flex-direction:column; gap:10px; margin-top:16px; }
-        .welcome-or { font-size:11px; color:var(--text-muted); margin:12px 0; position:relative; }
-        .welcome-or::before, .welcome-or::after { content:''; position:absolute; top:50%; width:30%; height:1px; background:var(--border); }
-        .welcome-or::before { left:5%; }
-        .welcome-or::after { right:5%; }
+/* ── GROUPS BAR ── */
+.aig-groups-bar {
+  display: flex; gap: 6px; padding: 10px 20px;
+  background: var(--bg-app); border-bottom: 1px solid var(--border);
+  overflow-x: auto; scrollbar-width: none;
+}
+.aig-groups-bar::-webkit-scrollbar { display: none; }
+.group-chip {
+  font-size: 12px; padding: 4px 12px; border-radius: 20px;
+  background: var(--bg-card); border: 1px solid var(--border);
+  color: var(--text-muted); cursor: pointer; white-space: nowrap;
+  transition: all .15s; font-weight: 600;
+}
+.group-chip:hover { border-color: var(--accent2); color: var(--accent2); }
+.group-chip.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
 
-        /* Modals */
-        .modal-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,.65); display:none; align-items:center; justify-content:center; z-index:1000; backdrop-filter:blur(6px); }
-        .modal { background:var(--bg-panel); width:580px; border-radius:10px; border:1px solid var(--border); box-shadow:0 20px 30px rgba(0,0,0,.5); display:flex; flex-direction:column; max-height:87vh; }
-        .modal-header { padding:14px 18px; border-bottom:1px solid var(--border); font-size:15px; font-weight:700; display:flex; justify-content:space-between; align-items:center; }
-        .modal-header .close-btn { cursor:pointer; color:var(--text-muted); transition:.15s; padding:4px; }
-        .modal-header .close-btn:hover { color:var(--text-main); }
-        .modal-body { padding:18px; overflow-y:auto; flex:1; }
+/* ── GRID ── */
+.aig-content { padding: 20px; }
+#aig-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+.empty-state {
+  grid-column: 1/-1; text-align: center; padding: 60px 20px;
+  color: var(--text-muted);
+}
+.empty-state .es-icon { font-size: 40px; margin-bottom: 12px; }
+.empty-state h3 { font-size: 16px; font-weight: 700; margin-bottom: 6px; color: var(--text-dim); }
+.empty-state p { font-size: 13px; }
 
-        /* Forms */
-        .form-group { margin-bottom:13px; }
-        .form-label { display:block; font-size:11px; margin-bottom:5px; color:var(--text-muted); font-weight:600; }
-        .form-input { width:100%; background:var(--bg-app); border:1px solid var(--border); color:var(--text-main); padding:7px 9px; border-radius:5px; font-family:var(--font-ui); font-size:13px; transition:.15s; }
-        .form-input:focus { border-color:var(--accent); }
-        select.form-input { cursor:pointer; }
-        .group-manage-item { display:flex; align-items:center; justify-content:space-between; padding:7px 11px; background:var(--bg-app); border:1px solid var(--border); border-radius:6px; margin-bottom:7px; font-size:12px; transition:.15s; }
-        .group-manage-item:hover { border-color:var(--accent); }
-        .delete-group-btn { background:transparent; border:none; color:var(--text-muted); cursor:pointer; padding:3px 6px; border-radius:4px; transition:.15s; }
-        .delete-group-btn:hover { color:var(--danger); }
+/* ── SHORTCUT CARD ── */
+.sc-card {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 14px;
+  cursor: pointer; transition: border-color .15s, transform .1s, box-shadow .15s;
+  position: relative; text-decoration: none; display: block;
+}
+.sc-card:hover { border-color: var(--accent); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,0,0,0.3); }
+.sc-card.priority { border-color: var(--priority); }
+.sc-card.priority:hover { border-color: var(--warning); }
+.sc-card-header { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 8px; }
+.sc-favicon {
+  width: 32px; height: 32px; border-radius: 8px; background: var(--bg-hover);
+  border: 1px solid var(--border); display: flex; align-items: center; justify-content: center;
+  font-size: 16px; flex-shrink: 0; overflow: hidden;
+}
+.sc-favicon img { width: 100%; height: 100%; object-fit: cover; border-radius: 7px; }
+.sc-title { font-size: 13px; font-weight: 700; color: var(--text); line-height: 1.3; word-break: break-word; flex: 1; }
+.sc-badge {
+  font-size: 10px; font-family: var(--font-mono); padding: 2px 6px;
+  background: var(--bg-hover); border: 1px solid var(--border);
+  border-radius: 4px; color: var(--text-muted); white-space: nowrap;
+}
+.sc-desc { font-size: 11px; color: var(--text-muted); line-height: 1.4; margin-bottom: 6px; }
+.sc-url { font-size: 10px; color: var(--text-muted); font-family: var(--font-mono); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sc-actions {
+  position: absolute; top: 8px; right: 8px;
+  display: none; gap: 4px;
+}
+.sc-card:hover .sc-actions { display: flex; }
+.sc-action-btn {
+  width: 24px; height: 24px; border-radius: 5px;
+  background: var(--bg-hover); border: 1px solid var(--border);
+  color: var(--text-muted); font-size: 12px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .15s;
+}
+.sc-action-btn:hover { background: var(--danger-dim); border-color: var(--danger); color: var(--danger); }
+.sc-action-btn.edit:hover { background: var(--accent2-dim); border-color: var(--accent2); color: var(--accent2); }
 
-        /* API Keys */
-        .api-key-row { background:var(--bg-app); border:1px solid var(--border); border-radius:7px; padding:12px; margin-bottom:10px; }
-        .api-key-row-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:7px; }
-        .api-provider-name { font-size:12px; font-weight:600; display:flex; align-items:center; gap:7px; }
-        .api-status { font-size:10px; padding:2px 7px; border-radius:10px; font-weight:600; }
-        .api-status.set { background:rgba(16,185,129,.15); color:var(--success); border:1px solid rgba(16,185,129,.2); }
-        .api-status.unset { background:rgba(245,158,11,.12); color:var(--warning); border:1px solid rgba(245,158,11,.2); }
+/* ── BUTTONS ── */
+.btn {
+  font-family: var(--font-ui); font-size: 12px; font-weight: 700;
+  padding: 7px 14px; border-radius: var(--radius-sm); cursor: pointer;
+  border: 1px solid transparent; transition: all .15s; outline: none; white-space: nowrap;
+}
+.btn-primary {
+  background: var(--accent); color: #0d1117; border-color: var(--accent);
+}
+.btn-primary:hover { filter: brightness(1.1); }
+.btn-secondary {
+  background: var(--bg-card); color: var(--text-dim); border-color: var(--border);
+}
+.btn-secondary:hover { border-color: var(--accent2); color: var(--accent2); }
+.btn-ghost {
+  background: transparent; color: var(--text-muted); border-color: var(--border);
+}
+.btn-ghost:hover { border-color: var(--border); color: var(--text); background: var(--bg-hover); }
+.btn-danger {
+  background: var(--danger-dim); color: var(--danger); border-color: var(--danger);
+}
+.btn-danger:hover { background: var(--danger); color: #fff; }
+.btn-sm { font-size: 11px; padding: 5px 10px; }
+.btn-icon {
+  font-size: 12px; padding: 6px 10px; display: flex; align-items: center; gap: 5px;
+}
 
-        /* Toasts */
-        .toast { position:fixed; bottom:22px; right:22px; background:var(--bg-panel); color:var(--text-main); padding:10px 18px; border-radius:6px; border-left:4px solid var(--accent); box-shadow:0 6px 18px rgba(0,0,0,.35); z-index:2000; font-size:12px; animation:toastIn .25s; pointer-events:none; }
-        .toast.error { border-left-color:var(--danger); }
-        .toast.success { border-left-color:var(--success); }
-        .toast.warning { border-left-color:var(--warning); }
-        @keyframes toastIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+/* ── FORMS ── */
+.form-group { margin-bottom: 14px; }
+.form-label { font-size: 12px; font-weight: 700; color: var(--text-dim); margin-bottom: 5px; display: block; }
+.form-control {
+  width: 100%; background: var(--bg-root); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 8px 10px; color: var(--text);
+  font-size: 13px; font-family: var(--font-ui); outline: none; transition: border-color .2s;
+}
+.form-control:focus { border-color: var(--accent); }
+select.form-control { cursor: pointer; }
+.form-hint { font-size: 10px; color: var(--text-muted); margin-top: 4px; }
+.checkbox-row { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; color: var(--text-dim); }
+.checkbox-row input[type=checkbox] { accent-color: var(--accent); width: 14px; height: 14px; }
 
-        .hidden { display:none !important; }
+/* ── MODAL ── */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+  display: none; align-items: center; justify-content: center;
+  z-index: 200; padding: 20px;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 14px; max-height: 90vh; overflow-y: auto;
+  box-shadow: var(--shadow); width: 100%;
+}
+.modal-header {
+  font-size: 15px; font-weight: 800; padding: 18px 20px 14px;
+  border-bottom: 1px solid var(--border); color: var(--text);
+}
+.modal-body { padding: 18px 20px; }
+.modal-actions { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
 
-        /* Sync spinner */
-        .sync-spinner { display:inline-block; width:12px; height:12px; border:2px solid rgba(255,255,255,.2); border-top-color:var(--accent); border-radius:50%; animation:spin .6s linear infinite; vertical-align:middle; margin-right:4px; }
-        @keyframes spin { to { transform:rotate(360deg); } }
-        .sync-status.syncing { border-color:rgba(59,130,246,.4); color:var(--accent); }
-        .sync-status.error { border-color:rgba(239,68,68,.4); color:var(--danger); background:rgba(239,68,68,.08); }
+/* ── SYNC SPINNER ── */
+@keyframes spin { to { transform: rotate(360deg); } }
+.sync-spinner {
+  display: inline-block; width: 12px; height: 12px;
+  border: 2px solid var(--border); border-top-color: var(--accent);
+  border-radius: 50%; animation: spin .6s linear infinite; margin-right: 5px;
+}
 
-        /* Privacy Lock Screen */
-        .lock-screen { position:fixed; top:0; left:0; width:100%; height:100%; background:var(--bg-app); z-index:9999; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:20px; }
-        .lock-screen.hidden { display:none !important; }
-        .lock-card { background:var(--bg-panel); border:1px solid var(--border); border-radius:12px; padding:32px; width:380px; max-width:90vw; text-align:center; box-shadow:0 16px 40px rgba(0,0,0,.5); }
-        .lock-card .lock-icon { font-size:40px; color:var(--accent); margin-bottom:16px; }
-        .lock-card h2 { font-size:18px; margin:0 0 6px 0; color:var(--text-main); }
-        .lock-card p { font-size:12px; color:var(--text-muted); margin:0 0 20px 0; }
-        .lock-card .form-input { text-align:center; font-size:14px; padding:10px 14px; margin-bottom:14px; }
-        .lock-card .btn-primary { width:100%; padding:10px; font-size:13px; justify-content:center; }
-        .lock-error { color:var(--danger); font-size:11px; margin-top:8px; display:none; }
-        .lock-setup { margin-top:12px; padding-top:12px; border-top:1px solid var(--border); }
-        .lock-setup .form-label { text-align:left; }
-        .lock-setup .form-input { text-align:left; font-size:12px; padding:8px 10px; }
-        .privacy-indicator { display:inline-flex; align-items:center; gap:4px; font-size:10px; padding:2px 8px; border-radius:10px; }
-        .privacy-indicator.on { background:rgba(16,185,129,.15); color:var(--success); border:1px solid rgba(16,185,129,.2); }
-        .privacy-indicator.off { background:rgba(245,158,11,.12); color:var(--warning); border:1px solid rgba(245,158,11,.2); }
+/* ── INFO BOX ── */
+.info-box {
+  background: var(--bg-app); border: 1px solid var(--border);
+  border-radius: 8px; padding: 12px 14px; font-size: 12px; line-height: 1.6;
+  color: var(--text-dim);
+}
+.info-box strong { color: var(--text); }
 
-        /* Responsive */
-        @media (max-width: 640px) {
-            header { padding:0 10px; }
-            .aig-toolbar { padding:8px 10px; gap:6px; }
-            .aig-search { max-width:none; }
-            .search-wrapper { max-width:none; }
-            .aig-history-bar { padding:6px 10px; }
-            .aig-groups-bar { padding:6px 10px; }
-            .aig-content { padding:12px; }
-            .shortcuts-grid { grid-template-columns:repeat(auto-fill, minmax(150px,1fr)); gap:8px; }
-            .modal { width:95vw !important; }
-            .brand small { display:none; }
-            .header-actions .btn-text { display:none; }
-        }
-    </style>
+/* ── PRIVACY INDICATOR ── */
+.privacy-indicator {
+  font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: 700;
+}
+.privacy-indicator.on { background: var(--accent-dim); color: var(--accent); border: 1px solid var(--accent); }
+.privacy-indicator.off { background: var(--bg-hover); color: var(--text-muted); border: 1px solid var(--border); }
+
+/* ── TOAST ── */
+#toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(60px);
+  background: var(--bg-card); border: 1px solid var(--border);
+  color: var(--text); font-size: 13px; font-weight: 600;
+  padding: 10px 20px; border-radius: 8px; z-index: 9999;
+  box-shadow: var(--shadow); transition: transform .3s ease; white-space: nowrap;
+}
+#toast.show { transform: translateX(-50%) translateY(0); }
+#toast.success { border-color: var(--success); color: var(--success); }
+#toast.error { border-color: var(--danger); color: var(--danger); }
+
+/* ── GROUPS LIST in MODAL ── */
+.group-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 7px 10px; background: var(--bg-app); border: 1px solid var(--border);
+  border-radius: 6px; margin-bottom: 6px;
+}
+.group-item span { font-size: 13px; }
+
+/* ── API KEY ROWS ── */
+.api-key-row {
+  display: grid; grid-template-columns: 120px 1fr 80px;
+  gap: 8px; align-items: center; margin-bottom: 9px;
+}
+.api-key-row label { font-size: 12px; font-weight: 700; color: var(--text-dim); }
+
+/* ── FAVICON PREVIEW ── */
+#sc-favicon-preview {
+  width: 34px; height: 34px; border-radius: 7px;
+  background: var(--bg-app); border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; font-size: 18px; overflow: hidden;
+}
+#sc-favicon-preview img { width: 100%; height: 100%; object-fit: cover; }
+
+/* ── SEARCH HIGHLIGHT ── */
+.hl { background: var(--accent-dim); color: var(--accent); border-radius: 2px; padding: 0 1px; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 600px) {
+  .aig-toolbar { gap: 6px; }
+  .btn-text { display: none; }
+  #aig-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+}
+</style>
 </head>
 <body>
 
-<!-- WELCOME / RESTORE SCREEN (for new devices) -->
+<!-- WELCOME SCREEN -->
 <div id="welcome-screen" class="welcome-screen hidden">
-    <div class="welcome-card">
-        <div class="wc-icon"><i class="fa-solid fa-rocket"></i></div>
-        <h2>Welcome to AI Giant</h2>
-        <div class="wc-sub">Your AI bookmark hub — access from any device with cloud sync</div>
-        <div id="welcome-gist-section">
-            <div style="background:var(--bg-app);border:1px solid var(--border);border-radius:7px;padding:13px;margin-bottom:16px;">
-                <div style="font-size:12px;font-weight:700;margin-bottom:8px;"><i class="fa-brands fa-github" style="color:var(--accent);"></i> Restore from Your Other Device</div>
-                <div style="font-size:11px;color:var(--text-muted);line-height:1.5;margin-bottom:12px;">
-                    Enter the same GitHub token and Gist ID you used on your other device to sync all your shortcuts.
-                    <br><strong style="color:var(--text-main);">Need your Gist ID?</strong> On your other device, click the <i class="fa-solid fa-share-nodes"></i> Share Link button in the toolbar and open the link on this device.
-                </div>
-                <div class="form-group">
-                    <label class="form-label"><i class="fa-brands fa-github" style="color:var(--accent);"></i> GitHub Personal Access Token</label>
-                    <input type="password" class="form-input" id="welcome-gist-token" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
-                    <div style="font-size:10px;color:var(--text-muted);margin-top:4px;">Must have <strong>gist</strong> scope enabled</div>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Gist ID <span style="font-weight:400;color:var(--text-muted);">(from your other device)</span></label>
-                    <input type="text" class="form-input" id="welcome-gist-id" placeholder="Paste Gist ID or Gist URL here...">
-                </div>
-                <div id="welcome-restore-error" style="color:var(--danger);font-size:11px;display:none;margin-bottom:10px;"></div>
-                <div id="welcome-restore-loading" style="font-size:11px;color:var(--accent);display:none;margin-bottom:10px;"><span class="sync-spinner"></span> Connecting to GitHub Gist...</div>
-                <button class="btn-primary" style="width:100%;" id="welcome-restore-btn" onclick="app.restoreFromWelcome()"><i class="fa-solid fa-cloud-arrow-down"></i> Restore My Data</button>
-            </div>
-        </div>
-        <div class="welcome-or">or</div>
-        <div class="welcome-actions">
-            <button class="btn-primary" style="width:100%;background:transparent;border:1px solid var(--border);color:var(--text-main);" onclick="app.startFresh()"><i class="fa-solid fa-plus"></i> Start Fresh (Empty Dashboard)</button>
-            <button class="btn-primary" style="width:100%;background:transparent;border:1px solid var(--border);color:var(--text-main);" onclick="aiGiant.importSession()"><i class="fa-solid fa-file-import"></i> Import Session File</button>
-        </div>
+  <div class="welcome-card">
+    <div class="wc-icon">🤖</div>
+    <h2>Welcome to AI Giant</h2>
+    <p class="wc-sub">Your AI bookmark hub — access from any device with cloud sync</p>
+    <div class="info-box" style="margin-bottom:16px;">
+      <strong>Restore from Your Other Device</strong><br/>
+      Enter the same GitHub token and Gist ID you used on your other device to sync all your shortcuts.<br/>
+      <span style="color:var(--text-muted)">Need your Gist ID? On your other device, click the Share Link button and open the link here.</span>
     </div>
+    <div class="form-group">
+      <label class="form-label">GitHub Personal Access Token</label>
+      <input type="password" id="wc-token" class="form-control" placeholder="ghp_..."/>
+      <div class="form-hint">Must have <strong>gist</strong> scope enabled</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Gist ID <span style="font-weight:400;color:var(--text-muted)">(from your other device)</span></label>
+      <input type="text" id="wc-gist-id" class="form-control" placeholder="abc123def456..."/>
+    </div>
+    <div id="wc-restore-error" style="color:var(--danger);font-size:11px;display:none;margin-bottom:10px;"></div>
+    <div id="wc-restore-loading" style="font-size:11px;color:var(--accent);display:none;margin-bottom:10px;">
+      <span class="sync-spinner"></span> Connecting to GitHub Gist…
+    </div>
+    <button class="btn btn-primary" style="width:100%;margin-bottom:10px;" onclick="welcomeRestore()">Restore My Data</button>
+    <div class="welcome-or">or</div>
+    <div class="welcome-actions">
+      <button class="btn btn-secondary" onclick="welcomeStartFresh()">Start Fresh (Empty Dashboard)</button>
+      <button class="btn btn-ghost" onclick="openSessionImport(true)">Import Session File</button>
+    </div>
+  </div>
 </div>
 
-<!-- PRIVACY LOCK SCREEN -->
+<!-- LOCK SCREEN -->
 <div id="lock-screen" class="lock-screen hidden">
-    <div class="lock-card">
-        <div class="lock-icon"><i class="fa-solid fa-shield-halved"></i></div>
-        <h2>AI Giant is Locked</h2>
-        <p>Enter your passphrase to unlock your dashboard</p>
-        <input type="password" class="form-input" id="lock-passphrase" placeholder="Enter passphrase..." onkeydown="if(event.key==='Enter') privacyLock.unlock()">
-        <button class="btn-primary" onclick="privacyLock.unlock()"><i class="fa-solid fa-lock-open"></i> Unlock</button>
-        <div class="lock-error" id="lock-error"><i class="fa-solid fa-circle-exclamation"></i> Incorrect passphrase. Try again.</div>
+  <div class="lock-card">
+    <div class="lock-icon">🔒</div>
+    <h2>AI Giant is Locked</h2>
+    <p>Enter your passphrase to unlock your dashboard</p>
+    <input type="password" id="lock-passphrase" class="form-control" placeholder="Passphrase…" onkeydown="if(event.key==='Enter')doUnlock()"/>
+    <div style="margin-top:10px;">
+      <button class="btn btn-primary" style="width:100%;" onclick="doUnlock()">Unlock</button>
     </div>
+    <div id="lock-error" class="lock-error">Incorrect passphrase. Try again.</div>
+  </div>
 </div>
 
-<header>
-    <div class="brand"><i class="fa-solid fa-rocket"></i> AI Giant <small>by SubarnaZen</small></div>
+<!-- MAIN APP -->
+<div id="app">
+  <!-- HEADER -->
+  <div class="aig-header">
+    <div class="brand">AI Giant <span class="small">by SubarnaZen</span></div>
     <div class="header-actions">
-        <div id="sync-status" class="sync-status"><i class="fa-brands fa-github"></i> Gist: Not Connected</div>
-        <div class="sep"></div>
-        <button class="btn-icon" title="Toggle Theme" onclick="toggleTheme()"><i class="fa-solid fa-circle-half-stroke"></i></button>
-        <button class="btn-icon" title="Lock Dashboard" onclick="privacyLock.lock()" id="lock-btn" style="display:none;"><i class="fa-solid fa-lock"></i></button>
-        <button class="btn-icon" title="Settings" onclick="ui.showSettings()"><i class="fa-solid fa-sliders"></i></button>
-        <button class="btn-icon" title="Export Session" onclick="aiGiant.exportSession()" style="color:var(--success);border:1px solid rgba(16,185,129,.3);"><i class="fa-solid fa-file-export"></i> <span class="btn-text">Export</span></button>
-        <button class="btn-icon" title="Resume Session" onclick="aiGiant.importSession()" style="border:1px solid var(--border);"><i class="fa-solid fa-file-import"></i> <span class="btn-text">Resume</span></button>
+      <div id="sync-status" class="sync-status" onclick="openGistModal()" title="Click to manage Gist">Gist: Not Connected</div>
+      <div class="sep"></div>
+      <button class="btn btn-ghost btn-sm btn-icon" onclick="exportSession()" title="Export session">📤 <span class="btn-text">Export</span></button>
+      <button class="btn btn-ghost btn-sm btn-icon" onclick="openSessionImport(false)" title="Import session">📥 <span class="btn-text">Resume</span></button>
+      <button class="btn btn-ghost btn-sm btn-icon" onclick="openSettings()" title="Settings">⚙️</button>
     </div>
-</header>
-<div class="aig-toolbar">
+  </div>
+
+  <!-- TOOLBAR -->
+  <div class="aig-toolbar">
     <div class="search-wrapper">
-        <i class="fa-solid fa-magnifying-glass"></i>
-        <input type="text" class="aig-search" id="aig-search" placeholder="Search shortcuts..." oninput="aiGiant.search(this.value)">
+      <input type="text" id="search-input" placeholder="Search shortcuts…" oninput="renderGrid()"/>
     </div>
-    <button class="btn-primary" onclick="aiGiant.openAddModal()"><i class="fa-solid fa-plus"></i> Add</button>
-    <button class="btn-icon" onclick="aiGiant.openGroupsModal()" style="border:1px solid var(--border);padding:5px 10px;border-radius:4px;font-size:11px;"><i class="fa-solid fa-folder-gear"></i> Groups</button>
-    <button class="btn-icon" onclick="aiGiant.openApiKeysModal()" style="border:1px solid var(--border);padding:5px 10px;border-radius:4px;font-size:11px;"><i class="fa-solid fa-key"></i> Keys</button>
-    <button class="btn-icon" onclick="gistSync.showConnectModal()" style="border:1px solid var(--border);padding:5px 10px;border-radius:4px;font-size:11px;" id="gist-connect-btn"><i class="fa-brands fa-github"></i> Connect Gist</button>
-    <button class="btn-icon hidden" onclick="gistSync.syncNow()" style="border:1px solid var(--border);padding:5px 10px;border-radius:4px;font-size:11px;" id="gist-sync-btn"><i class="fa-solid fa-rotate"></i> Sync Now</button>
-    <button class="btn-icon hidden" onclick="gistSync.copySyncLink()" style="border:1px solid rgba(16,185,129,.3);padding:5px 10px;border-radius:4px;font-size:11px;color:var(--success);" id="gist-copy-link-btn" title="Copy link for other devices"><i class="fa-solid fa-share-nodes"></i> Share Link</button>
-    <div style="margin-left:auto;display:flex;align-items:center;gap:6px;">
-        <span style="font-size:11px;color:var(--text-muted);"><i class="fa-solid fa-bolt" style="color:var(--accent);"></i> <span id="aig-total-count">0</span> sites</span>
-    </div>
-</div>
-<div class="aig-history-bar">
-    <i class="fa-solid fa-clock-rotate-left" style="color:var(--text-muted);font-size:11px;"></i>
-    <div class="aig-history-wrapper">
-        <input type="text" id="aig-history-search" placeholder="Search visit history..." oninput="aiGiant.searchHistory(this.value)" onfocus="aiGiant.searchHistory(this.value)">
-        <div id="history-results" class="history-results"></div>
-    </div>
-    <span style="font-size:10px;color:var(--text-muted);">Recent visits accessible across sessions</span>
-</div>
-<div class="aig-groups-bar" id="aig-groups-bar"></div>
-<div class="aig-content"><div id="aig-grid"></div></div>
+    <button class="btn btn-primary btn-sm btn-icon" onclick="openAddModal(null)">＋ <span class="btn-text">Add</span></button>
+    <button class="btn btn-secondary btn-sm btn-icon" onclick="openGroupsModal()">🗂 <span class="btn-text">Groups</span></button>
+    <button class="btn btn-secondary btn-sm btn-icon" onclick="openApiKeysModal()">🔑 <span class="btn-text">Keys</span></button>
+    <button class="btn btn-secondary btn-sm btn-icon" onclick="openGistModal()" id="connect-gist-btn">⚡ <span class="btn-text">Connect Gist</span></button>
+    <button class="btn btn-ghost btn-sm btn-icon" onclick="doSync()" id="sync-now-btn">🔄 <span class="btn-text">Sync Now</span></button>
+    <button class="btn btn-ghost btn-sm btn-icon" onclick="shareLink()">🔗 <span class="btn-text">Share Link</span></button>
+    <span class="toolbar-count"><span id="aig-total-count">0</span> sites</span>
+  </div>
 
-<!-- ADD / EDIT SHORTCUT -->
-<div class="modal-overlay" id="add-shortcut-modal">
-    <div class="modal" style="width:470px;">
-        <div class="modal-header">
-            <span id="add-modal-title"><i class="fa-solid fa-plus" style="color:var(--accent);"></i> Add Shortcut</span>
-            <i class="fa-solid fa-xmark close-btn" onclick="ui.hideModal('add-shortcut-modal')"></i>
-        </div>
-        <div class="modal-body">
-            <input type="hidden" id="sc-edit-id" value="">
-            <div class="form-group">
-                <label class="form-label">Site / Tool Name *</label>
-                <input type="text" class="form-input" id="sc-name" placeholder="e.g. Claude AI, Notion, Perplexity..." oninput="aiGiant.previewFavicon()">
-            </div>
-            <div class="form-group">
-                <label class="form-label">URL *</label>
-                <div style="display:flex;gap:7px;align-items:center;">
-                    <input type="url" class="form-input" id="sc-url" placeholder="https://..." oninput="aiGiant.previewFavicon()" style="flex:1;">
-                    <div id="sc-favicon-preview" style="width:34px;height:34px;border-radius:7px;background:var(--bg-app);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                        <i class="fa-solid fa-globe" style="color:var(--text-muted);font-size:13px;"></i>
-                    </div>
-                </div>
-            </div>
-            <div class="form-group">
-                <label class="form-label">Short Description</label>
-                <input type="text" class="form-input" id="sc-desc" placeholder="What does this tool do? (optional)">
-            </div>
-            <div class="form-group">
-                <label class="form-label">Category / Group</label>
-                <select class="form-input" id="sc-group"></select>
-            </div>
-            <div class="form-group">
-                <label class="form-label">Open Mode</label>
-                <select class="form-input" id="sc-open-mode">
-                    <option value="same">Open in current tab</option>
-                    <option value="new">Open in new tab</option>
-                </select>
-            </div>
-            <div class="form-group" style="display:flex;align-items:center;gap:9px;">
-                <input type="checkbox" id="sc-priority" style="width:16px;height:16px;cursor:pointer;accent-color:var(--accent);">
-                <label for="sc-priority" class="form-label" style="margin:0;cursor:pointer;">&#11088; Mark as priority (pins to top)</label>
-            </div>
-            <div style="display:flex;gap:9px;margin-top:18px;">
-                <button class="btn-primary" style="flex:1;" onclick="aiGiant.saveShortcut()"><i class="fa-solid fa-check"></i> <span id="add-modal-btn-label">Add Shortcut</span></button>
-                <button class="btn-icon" style="border:1px solid var(--border);padding:5px 14px;border-radius:4px;" onclick="ui.hideModal('add-shortcut-modal')">Cancel</button>
-            </div>
-        </div>
-    </div>
+  <!-- HISTORY BAR -->
+  <div class="aig-history-bar">
+    <div class="history-results" id="history-results"></div>
+    <span class="history-label">Recent visits</span>
+  </div>
+
+  <!-- GROUPS BAR -->
+  <div class="aig-groups-bar" id="aig-groups-bar"></div>
+
+  <!-- GRID -->
+  <div class="aig-content">
+    <div id="aig-grid"></div>
+  </div>
 </div>
 
-<!-- MANAGE GROUPS -->
-<div class="modal-overlay" id="groups-modal">
-    <div class="modal" style="width:400px;">
-        <div class="modal-header">
-            <span><i class="fa-solid fa-folder-gear" style="color:var(--accent);"></i> Manage Groups</span>
-            <i class="fa-solid fa-xmark close-btn" onclick="ui.hideModal('groups-modal')"></i>
+<!-- ADD/EDIT MODAL -->
+<div id="add-shortcut-modal" class="modal-overlay">
+  <div class="modal" style="max-width:470px;">
+    <div class="modal-header" id="add-modal-title">＋ Add Shortcut</div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Site / Tool Name *</label>
+        <input type="text" id="sc-name" class="form-control" placeholder="e.g. ChatGPT, Perplexity…"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">URL *</label>
+        <div style="display:flex;gap:7px;align-items:center;">
+          <input type="url" id="sc-url" class="form-control" placeholder="https://…" oninput="previewFavicon()" style="flex:1;"/>
+          <div id="sc-favicon-preview">🌐</div>
         </div>
-        <div class="modal-body">
-            <div class="form-group">
-                <label class="form-label">Create New Group</label>
-                <div style="display:flex;gap:7px;">
-                    <input type="text" class="form-input" id="new-group-name" placeholder="Group name..." style="flex:1;" onkeydown="if(event.key==='Enter') aiGiant.createGroup()">
-                    <button class="btn-primary" onclick="aiGiant.createGroup()"><i class="fa-solid fa-plus"></i> Add</button>
-                </div>
-            </div>
-            <hr style="border:0;border-top:1px solid var(--border);margin:13px 0;">
-            <div class="form-label" style="margin-bottom:9px;">Existing Groups</div>
-            <div id="groups-list"></div>
-        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Short Description</label>
+        <input type="text" id="sc-desc" class="form-control" placeholder="Optional description…"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Category / Group</label>
+        <input type="text" id="sc-group" class="form-control" list="groups-datalist" placeholder="e.g. LLM, Search, Code…"/>
+        <datalist id="groups-datalist"></datalist>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Open Mode</label>
+        <select id="sc-open-mode" class="form-control">
+          <option value="_self">Open in current tab</option>
+          <option value="_blank" selected>Open in new tab</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="checkbox-row">
+          <input type="checkbox" id="sc-priority"/> ⭐ Mark as priority (pins to top)
+        </label>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-primary" id="add-modal-btn" onclick="saveShortcut()">Add Shortcut</button>
+        <button class="btn btn-ghost" onclick="closeModal('add-shortcut-modal')">Cancel</button>
+        <button class="btn btn-danger" id="sc-delete-btn" style="display:none;" onclick="deleteEditingShortcut()">Delete</button>
+      </div>
     </div>
+  </div>
 </div>
 
-<!-- API KEYS -->
-<div class="modal-overlay" id="api-keys-modal">
-    <div class="modal" style="width:500px;">
-        <div class="modal-header">
-            <span><i class="fa-solid fa-key" style="color:var(--accent);"></i> AI Model API Keys</span>
-            <i class="fa-solid fa-xmark close-btn" onclick="ui.hideModal('api-keys-modal')"></i>
+<!-- GROUPS MODAL -->
+<div id="groups-modal" class="modal-overlay">
+  <div class="modal" style="max-width:400px;">
+    <div class="modal-header">🗂 Manage Groups</div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Create New Group</label>
+        <div style="display:flex;gap:7px;">
+          <input type="text" id="new-group-input" class="form-control" placeholder="Group name…" onkeydown="if(event.key==='Enter')addGroup()"/>
+          <button class="btn btn-primary btn-sm" onclick="addGroup()">Add</button>
         </div>
-        <div class="modal-body">
-            <p style="font-size:11px;color:var(--text-muted);margin:0 0 16px 0;">Keys stored locally and synced to your Gist. Never shared elsewhere.</p>
-            <div id="api-keys-list"></div>
-            <hr style="border:0;border-top:1px solid var(--border);margin:16px 0;">
-            <div class="form-label" style="margin-bottom:9px;">Add Custom Provider</div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:9px;">
-                <input type="text" class="form-input" id="custom-provider-name" placeholder="Provider name (e.g. Groq)">
-                <input type="password" class="form-input" id="custom-provider-key" placeholder="API Key...">
-            </div>
-            <button class="btn-primary" style="width:100%;" onclick="aiGiant.saveApiKeys()"><i class="fa-solid fa-floppy-disk"></i> Save All API Keys</button>
-        </div>
+      </div>
+      <hr style="border-color:var(--border);margin:12px 0;"/>
+      <div class="form-label" style="margin-bottom:9px;">Existing Groups</div>
+      <div id="groups-list"></div>
     </div>
+  </div>
 </div>
 
-<!-- SETTINGS -->
-<div class="modal-overlay" id="settings-modal">
-    <div class="modal" style="width:520px;">
-        <div class="modal-header">
-            <span><i class="fa-solid fa-sliders" style="color:var(--accent);"></i> System Configuration</span>
-            <i class="fa-solid fa-xmark close-btn" onclick="ui.hideModal('settings-modal')"></i>
-        </div>
-        <div class="modal-body">
-            <div style="background:var(--bg-app);border:1px solid var(--border);border-radius:7px;padding:13px;margin-bottom:16px;">
-                <div style="font-size:12px;font-weight:700;margin-bottom:8px;"><i class="fa-brands fa-github" style="color:var(--accent);"></i> GitHub Gist Sync <span style="font-weight:400;color:var(--text-muted);font-size:10px;">(free, syncs across devices)</span></div>
-                <div id="gist-settings-status" style="margin-bottom:10px;"></div>
-                <div style="display:flex;gap:8px;margin-top:8px;">
-                    <button class="btn-primary" style="flex:1;" onclick="ui.hideSettings(); gistSync.showConnectModal();"><i class="fa-solid fa-plug"></i> Connect / Reconnect Gist</button>
-                    <button class="btn-primary" style="flex:1;background:var(--success);" onclick="ui.hideSettings(); gistSync.syncNow();"><i class="fa-solid fa-rotate"></i> Sync Now</button>
-                </div>
-                <div style="display:flex;gap:8px;margin-top:8px;" id="gist-settings-actions" class="hidden">
-                    <button class="btn-icon" style="border:1px solid var(--border);padding:5px 10px;border-radius:4px;font-size:11px;white-space:nowrap;flex:1;" onclick="gistSync.copySyncLink()" title="Copy sync link for other devices"><i class="fa-solid fa-share-nodes"></i> Copy Link</button>
-                    <button class="btn-danger" style="flex:1;" onclick="gistSync.disconnect(); ui.showSettings();"><i class="fa-solid fa-link-slash"></i> Disconnect</button>
-                </div>
-                <div style="font-size:10px;color:var(--text-muted);line-height:1.4;margin-top:10px;">
-                    <strong style="color:var(--text-main);">Setup:</strong> GitHub → Settings → Developer settings → Tokens (classic) → check <strong>gist</strong> scope → Connect Gist button above
-                </div>
-            </div>
-            <div class="form-group">
-                <label class="form-label">Local/Custom Endpoint (Ollama etc.)</label>
-                <input type="text" class="form-input" id="custom-endpoint" value="http://localhost:11434/v1/chat/completions">
-            </div>
-            <div style="background:var(--bg-app);border:1px solid var(--border);border-radius:7px;padding:13px;margin-bottom:16px;">
-                <div style="font-size:12px;font-weight:700;margin-bottom:8px;"><i class="fa-solid fa-shield-halved" style="color:var(--accent);"></i> Privacy Lock <span style="font-weight:400;color:var(--text-muted);font-size:10px;">(client-side passphrase protection)</span></div>
-                <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
-                    <span class="privacy-indicator off" id="privacy-status-badge"><i class="fa-solid fa-lock-open"></i> Disabled</span>
-                    <span style="font-size:10px;color:var(--text-muted);">Prevents unauthorized access to your dashboard</span>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Set / Change Passphrase</label>
-                    <input type="password" class="form-input" id="privacy-passphrase" placeholder="Enter a passphrase...">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Confirm Passphrase</label>
-                    <input type="password" class="form-input" id="privacy-passphrase-confirm" placeholder="Re-enter passphrase...">
-                </div>
-                <div style="display:flex;gap:8px;">
-                    <button class="btn-primary" style="flex:1;" onclick="privacyLock.enableFromSettings()"><i class="fa-solid fa-shield-halved"></i> Enable Lock</button>
-                    <button class="btn-danger" style="flex:1;display:none;" id="disable-lock-btn" onclick="privacyLock.disable()"><i class="fa-solid fa-lock-open"></i> Disable Lock</button>
-                </div>
-            </div>
-            <button class="btn-primary" style="width:100%;margin-top:6px;" onclick="app.saveSettings()"><i class="fa-solid fa-floppy-disk"></i> Save Configuration</button>
-        </div>
+<!-- API KEYS MODAL -->
+<div id="api-keys-modal" class="modal-overlay">
+  <div class="modal" style="max-width:500px;">
+    <div class="modal-header">🔑 AI Model API Keys</div>
+    <div class="modal-body">
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:14px;">Keys stored locally and synced to your Gist. Never shared elsewhere.</p>
+      <div id="api-keys-list"></div>
+      <hr style="border-color:var(--border);margin:14px 0;"/>
+      <div class="form-label" style="margin-bottom:9px;">Add Custom Provider</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:9px;">
+        <input type="text" id="api-provider-name" class="form-control" placeholder="Provider name…"/>
+        <input type="password" id="api-provider-key" class="form-control" placeholder="API key…"/>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-primary btn-sm" onclick="addApiKey()">Add Key</button>
+        <button class="btn btn-ghost btn-sm" onclick="saveApiKeys()">Save All</button>
+        <button class="btn btn-ghost btn-sm" style="margin-left:auto;" onclick="closeModal('api-keys-modal')">Close</button>
+      </div>
     </div>
+  </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div id="settings-modal" class="modal-overlay">
+  <div class="modal" style="max-width:520px;">
+    <div class="modal-header">⚙️ System Configuration</div>
+    <div class="modal-body">
+      <div class="info-box" style="margin-bottom:16px;">
+        <strong>GitHub Gist Sync</strong> <span style="font-weight:400;color:var(--text-muted);font-size:10px;">(free, syncs across devices)</span>
+        <div id="gist-settings-status" style="margin:8px 0;font-size:11px;color:var(--text-muted);"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-secondary btn-sm" onclick="openGistModal()">Connect / Reconnect Gist</button>
+          <button class="btn btn-ghost btn-sm" onclick="doSync()">Sync Now</button>
+          <button class="btn btn-ghost btn-sm" id="settings-copy-link" style="display:none;" onclick="shareLink()">Copy Link</button>
+          <button class="btn btn-danger btn-sm" id="settings-disconnect-btn" style="display:none;" onclick="disconnectGist()">Disconnect</button>
+        </div>
+        <div class="form-hint" style="margin-top:8px;">Setup: GitHub → Settings → Developer settings → Tokens (classic) → check <strong>gist</strong> scope</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Local/Custom Endpoint (Ollama etc.)</label>
+        <input type="url" id="settings-endpoint" class="form-control" placeholder="http://localhost:11434"/>
+      </div>
+      <div class="info-box" style="margin-bottom:16px;">
+        <strong>Privacy Lock</strong> <span style="font-weight:400;color:var(--text-muted);font-size:10px;">(client-side passphrase protection)</span>
+        <div style="display:flex;align-items:center;gap:8px;margin:8px 0;">
+          <span id="privacy-status-badge" class="privacy-indicator off">Disabled</span>
+          <span style="font-size:11px;color:var(--text-muted);">Prevents unauthorized access to your dashboard</span>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Set / Change Passphrase</label>
+          <input type="password" id="settings-passphrase" class="form-control" placeholder="New passphrase…"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Confirm Passphrase</label>
+          <input type="password" id="settings-passphrase-confirm" class="form-control" placeholder="Confirm passphrase…"/>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-primary btn-sm" onclick="enableLock()">Enable Lock</button>
+          <button class="btn btn-danger btn-sm" onclick="disableLock()">Disable Lock</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button class="btn btn-primary btn-sm" onclick="saveSettings()">Save Configuration</button>
+        <button class="btn btn-ghost btn-sm" onclick="closeModal('settings-modal')">Close</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- GIST CONNECT MODAL -->
-<div class="modal-overlay" id="gist-connect-modal">
-    <div class="modal" style="width:460px;">
-        <div class="modal-header">
-            <span><i class="fa-brands fa-github" style="color:var(--accent);"></i> Connect GitHub Gist</span>
-            <i class="fa-solid fa-xmark close-btn" onclick="ui.hideModal('gist-connect-modal')"></i>
-        </div>
-        <div class="modal-body">
-            <div id="gist-connect-current-status" style="display:none;background:var(--bg-app);border:1px solid var(--border);border-radius:7px;padding:10px 13px;margin-bottom:14px;"></div>
-            <div style="font-size:11px;color:var(--text-muted);line-height:1.5;margin-bottom:14px;">
-                Sync your shortcuts across all devices using a free GitHub Gist. Your data stays private in a secret Gist.
-            </div>
-            <div class="form-group">
-                <label class="form-label"><i class="fa-brands fa-github" style="color:var(--accent);"></i> GitHub Personal Access Token (Classic) *</label>
-                <input type="password" class="form-input" id="connect-gist-token" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
-                <div style="font-size:10px;color:var(--text-muted);margin-top:4px;">
-                    GitHub → Settings → Developer settings → <strong>Tokens (classic)</strong> → check <strong>gist</strong> scope
-                </div>
-            </div>
-            <div class="form-group">
-                <label class="form-label">Gist ID <span style="font-weight:400;color:var(--text-muted);">(leave empty to auto-create new)</span></label>
-                <input type="text" class="form-input" id="connect-gist-id" placeholder="Paste Gist ID or full Gist URL...">
-            </div>
-            <div id="gist-connect-error" style="color:var(--danger);font-size:11px;display:none;margin-bottom:10px;"></div>
-            <div id="gist-connect-success" style="color:var(--success);font-size:11px;display:none;margin-bottom:10px;"></div>
-            <div style="display:flex;gap:9px;margin-top:14px;">
-                <button class="btn-primary" style="flex:1;" id="gist-connect-submit" onclick="gistSync.connectFromModal()"><i class="fa-solid fa-plug"></i> Connect & Sync</button>
-                <button class="btn-danger" style="display:none;" id="gist-disconnect-btn" onclick="gistSync.disconnectFromModal()"><i class="fa-solid fa-link-slash"></i> Disconnect</button>
-                <button class="btn-icon" style="border:1px solid var(--border);padding:5px 14px;border-radius:4px;" onclick="ui.hideModal('gist-connect-modal')">Cancel</button>
-            </div>
-        </div>
+<div id="gist-connect-modal" class="modal-overlay">
+  <div class="modal" style="max-width:460px;">
+    <div class="modal-header">⚡ Connect GitHub Gist</div>
+    <div class="modal-body">
+      <div id="gist-connect-current-status" style="display:none;" class="info-box" style="margin-bottom:14px;"></div>
+      <p style="font-size:11px;color:var(--text-muted);line-height:1.5;margin-bottom:14px;">
+        Sync your shortcuts across all devices using a free GitHub Gist. Your data stays private in a secret Gist.
+      </p>
+      <div class="form-group">
+        <label class="form-label">GitHub Personal Access Token (Classic) *</label>
+        <input type="password" id="gist-token-input" class="form-control" placeholder="ghp_…"/>
+        <div class="form-hint">GitHub → Settings → Developer settings → <strong>Tokens (classic)</strong> → check <strong>gist</strong> scope</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Gist ID <span style="font-weight:400;color:var(--text-muted);">(leave empty to auto-create new)</span></label>
+        <input type="text" id="gist-id-input" class="form-control" placeholder="Leave empty to create new…"/>
+      </div>
+      <div id="gist-connect-error" style="color:var(--danger);font-size:11px;display:none;margin-bottom:10px;"></div>
+      <div id="gist-connect-success" style="color:var(--success);font-size:11px;display:none;margin-bottom:10px;"></div>
+      <div id="gist-connect-loading" style="font-size:11px;color:var(--accent);display:none;margin-bottom:10px;">
+        <span class="sync-spinner"></span> Connecting…
+      </div>
+      <div style="display:flex;gap:9px;flex-wrap:wrap;">
+        <button class="btn btn-primary" onclick="connectGist()">Connect &amp; Sync</button>
+        <button class="btn btn-danger btn-sm" onclick="disconnectGist()">Disconnect</button>
+        <button class="btn btn-ghost" onclick="closeModal('gist-connect-modal')">Cancel</button>
+      </div>
     </div>
+  </div>
 </div>
 
-<!-- SESSION IMPORT PREVIEW -->
-<div class="modal-overlay" id="session-import-modal">
-    <div class="modal" style="width:480px;">
-        <div class="modal-header">
-            <span><i class="fa-solid fa-file-import" style="color:var(--accent);"></i> Resume Session</span>
-            <i class="fa-solid fa-xmark close-btn" onclick="ui.hideModal('session-import-modal')"></i>
-        </div>
-        <div class="modal-body">
-            <div id="session-import-info"></div>
-            <div style="display:flex;gap:9px;margin-top:16px;">
-                <button class="btn-primary" style="flex:1;" onclick="aiGiant.confirmSessionImport()"><i class="fa-solid fa-file-import"></i> Resume Session</button>
-                <button class="btn-icon" style="border:1px solid var(--border);padding:5px 14px;border-radius:4px;" onclick="ui.hideModal('session-import-modal')">Cancel</button>
-            </div>
-        </div>
+<!-- SESSION IMPORT MODAL -->
+<div id="session-import-modal" class="modal-overlay">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-header">📥 Resume Session</div>
+    <div class="modal-body">
+      <div id="session-import-info" style="font-size:13px;color:var(--text-muted);margin-bottom:14px;">
+        Select a previously exported <strong>.json</strong> session file to restore your shortcuts, groups, and settings.
+      </div>
+      <input type="file" id="session-file-input" accept=".json" class="form-control" style="margin-bottom:14px;"/>
+      <div id="session-import-preview" style="display:none;font-size:12px;color:var(--text-muted);margin-bottom:14px;"></div>
+      <div style="display:flex;gap:9px;">
+        <button class="btn btn-primary" onclick="doImportSession()">Resume Session</button>
+        <button class="btn btn-ghost" onclick="closeModal('session-import-modal')">Cancel</button>
+      </div>
     </div>
+  </div>
 </div>
+
+<!-- TOAST -->
+<div id="toast"></div>
 
 <script>
-const SCHEMA_VERSION = 6;
-
-const state = {
-    settings: {
-        gistToken: '', gistId: '', customEndpoint: 'http://localhost:11434/v1/chat/completions'
-    }
+// ══════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════
+const STATE_KEY = 'aig_state_v3';
+let state = {
+  shortcuts: [],
+  groups: [],
+  apiKeys: {},
+  history: [],
+  gistToken: '',
+  gistId: '',
+  passphrase: '',
+  lockEnabled: false,
+  endpoint: '',
+  activeGroup: 'All',
+  initialized: false,
 };
 
-/* ===== PRIVACY LOCK ===== */
-var privacyLock = {
-    _hashPassphrase: function(str) {
-        /* Simple SHA-256 based hash using SubtleCrypto (async not usable synchronously, so we use a deterministic string hash) */
-        var hash = 0;
-        for (var i = 0; i < str.length; i++) {
-            var ch = str.charCodeAt(i);
-            hash = ((hash << 5) - hash) + ch;
-            hash = hash & hash; /* Convert to 32bit integer */
-        }
-        /* Combine with a salt for better protection */
-        var salted = 'aig_privacy_' + str + '_subarnazen_nexus';
-        var hash2 = 0;
-        for (var j = 0; j < salted.length; j++) {
-            var ch2 = salted.charCodeAt(j);
-            hash2 = ((hash2 << 5) - hash2) + ch2;
-            hash2 = hash2 & hash2;
-        }
-        return 'h1_' + Math.abs(hash).toString(36) + '_h2_' + Math.abs(hash2).toString(36);
-    },
+let editingId = null;
+let sessionImportFromWelcome = false;
 
-    isEnabled: function() {
-        return !!localStorage.getItem('aig_privacy_hash');
-    },
-
-    init: function() {
-        if (this.isEnabled()) {
-            this.showLockScreen();
-        }
-        this.updateUI();
-    },
-
-    showLockScreen: function() {
-        document.getElementById('lock-screen').classList.remove('hidden');
-        document.getElementById('lock-passphrase').value = '';
-        document.getElementById('lock-error').style.display = 'none';
-        setTimeout(function() { document.getElementById('lock-passphrase').focus(); }, 150);
-    },
-
-    hideLockScreen: function() {
-        document.getElementById('lock-screen').classList.add('hidden');
-    },
-
-    unlock: function() {
-        var input = document.getElementById('lock-passphrase').value;
-        if (!input) return;
-        var hash = this._hashPassphrase(input);
-        var stored = localStorage.getItem('aig_privacy_hash');
-        if (hash === stored) {
-            this.hideLockScreen();
-            this.updateUI();
-        } else {
-            document.getElementById('lock-error').style.display = 'block';
-            document.getElementById('lock-passphrase').value = '';
-            document.getElementById('lock-passphrase').focus();
-        }
-    },
-
-    lock: function() {
-        this.showLockScreen();
-    },
-
-    enableFromSettings: function() {
-        var pw = document.getElementById('privacy-passphrase').value;
-        var pw2 = document.getElementById('privacy-passphrase-confirm').value;
-        if (!pw) { ui.toast('Please enter a passphrase', 'error'); return; }
-        if (pw.length < 4) { ui.toast('Passphrase must be at least 4 characters', 'error'); return; }
-        if (pw !== pw2) { ui.toast('Passphrases do not match', 'error'); return; }
-        var hash = this._hashPassphrase(pw);
-        localStorage.setItem('aig_privacy_hash', hash);
-        document.getElementById('privacy-passphrase').value = '';
-        document.getElementById('privacy-passphrase-confirm').value = '';
-        this.updateUI();
-        ui.toast('Privacy lock enabled! Your dashboard is now protected.', 'success');
-    },
-
-    disable: function() {
-        if (!confirm('Remove privacy lock? Anyone with the link can access your dashboard.')) return;
-        localStorage.removeItem('aig_privacy_hash');
-        this.updateUI();
-        ui.toast('Privacy lock disabled', 'warning');
-    },
-
-    updateUI: function() {
-        var enabled = this.isEnabled();
-        var lockBtn = document.getElementById('lock-btn');
-        var badge = document.getElementById('privacy-status-badge');
-        var disableBtn = document.getElementById('disable-lock-btn');
-        if (lockBtn) lockBtn.style.display = enabled ? '' : 'none';
-        if (badge) {
-            badge.className = 'privacy-indicator ' + (enabled ? 'on' : 'off');
-            badge.innerHTML = enabled ? '<i class="fa-solid fa-lock"></i> Enabled' : '<i class="fa-solid fa-lock-open"></i> Disabled';
-        }
-        if (disableBtn) disableBtn.style.display = enabled ? '' : 'none';
-    }
-};
-
-/* ===== THEME ===== */
-function toggleTheme() {
-    var isLight = document.body.getAttribute('data-theme') === 'light';
-    if (isLight) {
-        document.body.removeAttribute('data-theme');
-        localStorage.removeItem('aig_theme');
-    } else {
-        document.body.setAttribute('data-theme', 'light');
-        localStorage.setItem('aig_theme', 'light');
-    }
+// ══════════════════════════════════════════════
+//  PERSISTENCE
+// ══════════════════════════════════════════════
+function saveState() {
+  try { localStorage.setItem(STATE_KEY, JSON.stringify(state)); } catch(e) {}
 }
 
-/* ===== GITHUB GIST SYNC ===== */
-var gistSync = {
-    token: '', gistId: '', _syncDebounce: null, lastSyncAt: null,
-    _isLoading: false, _isSaving: false, _suppressAutoSync: false,
-
-    /* Extract Gist ID from user input — handles raw IDs, full URLs, and /username/id paths */
-    _extractGistId: function(input) {
-        if (!input) return '';
-        input = input.trim();
-        /* If it looks like a URL, extract the Gist ID from the path */
-        if (input.indexOf('/') !== -1) {
-            /* e.g. https://gist.github.com/username/abc123def456 or gist.github.com/abc123 */
-            var parts = input.replace(/^https?:\/\//, '').split('/');
-            /* Gist IDs are 32+ character hex strings. Find the segment that looks like a Gist ID */
-            for (var i = parts.length - 1; i >= 0; i--) {
-                if (parts[i] && /^[a-f0-9]{20,}$/i.test(parts[i])) return parts[i];
-            }
-            /* Fallback: take the last non-empty segment that isn't the domain */
-            for (var j = parts.length - 1; j >= 0; j--) {
-                if (parts[j] && parts[j] !== 'gist.github.com' && parts[j] !== 'github.com') return parts[j];
-            }
-        }
-        return input;
-    },
-
-    /* Build Authorization header — supports both classic (ghp_) and fine-grained (github_pat_) tokens */
-    _authHeader: function(token) {
-        if (!token) return {};
-        if (token.indexOf('github_pat_') === 0) {
-            return { 'Authorization': 'Bearer ' + token };
-        }
-        return { 'Authorization': 'token ' + token };
-    },
-
-    init: function() {
-        var saved = localStorage.getItem('aig_gist');
-        if (saved) {
-            try {
-                var d = JSON.parse(saved);
-                this.token = d.token || '';
-                this.gistId = d.gistId || '';
-                this.lastSyncAt = d.lastSyncAt || null;
-            } catch(e) {}
-        }
-        this.updateUI();
-    },
-
-    /* Called when user clicks "Connect Gist" button in toolbar or settings */
-    showConnectModal: function() {
-        var tokenField = document.getElementById('connect-gist-token');
-        var idField = document.getElementById('connect-gist-id');
-        var statusDiv = document.getElementById('gist-connect-current-status');
-        var disconnectBtn = document.getElementById('gist-disconnect-btn');
-        var successEl = document.getElementById('gist-connect-success');
-
-        /* Clear previous messages */
-        var errEl = document.getElementById('gist-connect-error');
-        if (errEl) errEl.style.display = 'none';
-        if (successEl) successEl.style.display = 'none';
-
-        /* If already connected, show status and disconnect option + pre-fill credentials */
-        if (this.token && this.gistId) {
-            var timeStr = this.lastSyncAt ? new Date(this.lastSyncAt).toLocaleString() : 'Never';
-            statusDiv.innerHTML = '<span class="privacy-indicator on"><i class="fa-solid fa-check"></i> Connected</span> <span style="font-size:10px;color:var(--text-muted);">Gist: ' + this._escHtml(this.gistId) + ' · Last sync: ' + timeStr + '</span>' +
-                '<div style="font-size:10px;color:var(--text-muted);margin-top:4px;">To reconnect with different credentials, just enter new values and click Connect.</div>';
-            statusDiv.style.display = 'block';
-            disconnectBtn.style.display = 'inline-flex';
-            /* Pre-fill current credentials so user can see/reconnect */
-            tokenField.value = this.token;
-            idField.value = this.gistId;
-        } else {
-            statusDiv.style.display = 'none';
-            disconnectBtn.style.display = 'none';
-            /* Pre-fill from settings if available */
-            tokenField.value = state.settings.gistToken || '';
-            idField.value = state.settings.gistId || '';
-        }
-
-        /* Also check URL hash */
-        var hash = window.location.hash;
-        if (hash && hash.startsWith('#gist=')) {
-            idField.value = this._extractGistId(hash.substring(6));
-            history.replaceState(null, '', window.location.pathname);
-        }
-
-        document.getElementById('gist-connect-modal').style.display = 'flex';
-        setTimeout(function() { tokenField.focus(); }, 150);
-    },
-
-    /* Disconnect from within the connect modal */
-    disconnectFromModal: function() {
-        this.disconnect();
-        /* Update the modal to show disconnected state */
-        var statusDiv = document.getElementById('gist-connect-current-status');
-        var disconnectBtn = document.getElementById('gist-disconnect-btn');
-        statusDiv.innerHTML = '<span class="privacy-indicator off"><i class="fa-solid fa-link-slash"></i> Disconnected</span>';
-        disconnectBtn.style.display = 'none';
-        /* Clear the form fields */
-        document.getElementById('connect-gist-token').value = '';
-        document.getElementById('connect-gist-id').value = '';
-        ui.toast('Gist disconnected', 'warning');
-    },
-
-    _escHtml: function(str) {
-        if (!str) return '';
-        return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-    },
-
-    /* Called from the Connect Modal form */
-    connectFromModal: async function() {
-        var token = document.getElementById('connect-gist-token').value.trim();
-        var gistIdRaw = document.getElementById('connect-gist-id').value.trim();
-        var gistId = this._extractGistId(gistIdRaw);
-        var errEl = document.getElementById('gist-connect-error');
-        var successEl = document.getElementById('gist-connect-success');
-        var submitBtn = document.getElementById('gist-connect-submit');
-
-        /* Update the field with cleaned Gist ID */
-        if (gistId !== gistIdRaw && gistId) {
-            document.getElementById('connect-gist-id').value = gistId;
-        }
-
-        if (!token) {
-            errEl.textContent = 'Please enter your GitHub Personal Access Token.';
-            errEl.style.display = 'block';
-            if (successEl) successEl.style.display = 'none';
-            return;
-        }
-        if (!gistId && !confirm('No Gist ID entered. A new secret Gist will be created with your current data. Continue?')) {
-            return;
-        }
-
-        /* Show loading */
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<span class="sync-spinner"></span> Connecting...';
-        errEl.style.display = 'none';
-        if (successEl) successEl.style.display = 'none';
-
-        try {
-            if (!gistId) {
-                /* Create new Gist */
-                var res = await fetch('https://api.github.com/gists', {
-                    method: 'POST',
-                    headers: Object.assign({}, this._authHeader(token), { 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' }),
-                    body: JSON.stringify({ description: 'AI Giant Data Backup', public: false,
-                        files: { 'ai-giant-data.json': { content: JSON.stringify(aiGiant.getExportData(), null, 2) } }
-                    })
-                });
-                var data = await res.json();
-                if (!res.ok) {
-                    var errMsg = data.message || 'Failed to create Gist (HTTP ' + res.status + ')';
-                    if (res.status === 401) errMsg = 'Invalid GitHub token. Make sure it has the "gist" scope enabled. (Use Classic token, not Fine-grained)';
-                    if (res.status === 403 && data.message && data.message.indexOf('rate limit') !== -1) errMsg = 'GitHub API rate limit exceeded. Please wait a minute and try again.';
-                    throw new Error(errMsg);
-                }
-                gistId = data.id;
-                /* Gist was just created with our data — no need to load from it, just save credentials */
-                this.token = token;
-                this.gistId = gistId;
-                this.lastSyncAt = new Date().toISOString();
-                this._saveCredentials();
-                this.updateUI();
-                if (successEl) {
-                    successEl.innerHTML = '<i class="fa-solid fa-check-circle"></i> New Gist created! Your data is now synced.';
-                    successEl.style.display = 'block';
-                }
-                /* Close after short delay so user sees success */
-                setTimeout(function() { ui.hideModal('gist-connect-modal'); }, 1500);
-                ui.toast('Gist connected! Your shortcuts are synced to the cloud.', 'success');
-            } else {
-                /* Verify existing Gist — read it to validate token AND get data in one request */
-                var res2 = await fetch('https://api.github.com/gists/' + gistId, {
-                    headers: Object.assign({}, this._authHeader(token), { 'Accept': 'application/vnd.github.v3+json' })
-                });
-                if (!res2.ok) {
-                    var errData = {};
-                    try { errData = await res2.json(); } catch(e2) {}
-                    if (res2.status === 401) throw new Error('Invalid GitHub token. Make sure it has the "gist" scope enabled. (Use Classic token, not Fine-grained)');
-                    if (res2.status === 404) throw new Error('Gist not found. Check the Gist ID and make sure your token has access to it.');
-                    if (res2.status === 403 && errData.message && errData.message.indexOf('rate limit') !== -1) throw new Error('GitHub API rate limit exceeded. Please wait a minute and try again.');
-                    throw new Error(errData.message || 'Could not access Gist (HTTP ' + res2.status + ')');
-                }
-
-                /* Save credentials — ONLY after successful validation */
-                this.token = token;
-                this.gistId = gistId;
-                this.lastSyncAt = new Date().toISOString();
-                this._saveCredentials();
-                this.updateUI();
-                this._setSyncingUI(true);
-
-                /* Show success in the modal (keep modal open during sync) */
-                if (successEl) {
-                    successEl.innerHTML = '<i class="fa-solid fa-check-circle"></i> Connected to Gist! Syncing data...';
-                    successEl.style.display = 'block';
-                }
-                if (errEl) errEl.style.display = 'none';
-
-                /* Parse the Gist data we already fetched (avoid a 2nd API call) */
-                var gistData = await res2.json();
-                var gistFile = gistData.files && gistData.files['ai-giant-data.json'];
-                if (gistFile && gistFile.content) {
-                    try {
-                        var parsed = JSON.parse(gistFile.content);
-                        if (parsed.shortcuts && Array.isArray(parsed.shortcuts)) {
-                            /* Merge the remote data into local, then push merged data back */
-                            this._suppressAutoSync = true;
-                            aiGiant.mergeImportData(parsed, true);
-                            this._suppressAutoSync = false;
-                        }
-                    } catch(parseErr) {
-                        /* Data in Gist is corrupt — still connected, just can't merge */
-                        console.warn('Could not parse Gist data:', parseErr.message);
-                    }
-                }
-
-                /* Push merged data back to Gist */
-                var saveRetries = 0;
-                while (this._isSaving && saveRetries < 10) {
-                    await new Promise(function(r) { setTimeout(r, 300); });
-                    saveRetries++;
-                }
-                await this._saveToGist();
-                this.lastSyncAt = new Date().toISOString();
-                this._saveCredentials();
-                this._setSyncingUI(false);
-
-                /* After successful sync, close the modal */
-                ui.hideModal('gist-connect-modal');
-                ui.toast('Connected! Data synced with Gist.', 'success');
-            }
-
-        } catch (e) {
-            /* DO NOT close modal on error — keep it open so user can fix and retry */
-            this._setSyncingUI(false, e.message);
-            errEl.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> ' + this._escHtml(e.message);
-            errEl.style.display = 'block';
-            if (successEl) successEl.style.display = 'none';
-            /* If credentials were saved but sync failed, update status */
-            if (this.token && this.gistId) {
-                var statusDiv2 = document.getElementById('gist-connect-current-status');
-                if (statusDiv2) {
-                    statusDiv2.innerHTML = '<span class="privacy-indicator off" style="background:rgba(239,68,68,.15);color:var(--danger);border-color:rgba(239,68,68,.2);"><i class="fa-solid fa-exclamation-triangle"></i> Connected but sync failed</span> <span style="font-size:10px;color:var(--text-muted);">You can try Sync Now from the toolbar.</span>';
-                    statusDiv2.style.display = 'block';
-                }
-                var disconnectBtn2 = document.getElementById('gist-disconnect-btn');
-                if (disconnectBtn2) disconnectBtn2.style.display = 'inline-flex';
-            }
-        } finally {
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = '<i class="fa-solid fa-plug"></i> Connect & Sync';
-        }
-    },
-
-    disconnect: function() {
-        this.token = '';
-        this.gistId = '';
-        this.lastSyncAt = null;
-        this._saveCredentials();
-        /* Also clear from settings */
-        state.settings.gistToken = '';
-        state.settings.gistId = '';
-        localStorage.setItem('aig_settings', JSON.stringify(state.settings));
-        this.updateUI();
-        ui.toast('Gist disconnected. Using local-only mode.', 'warning');
-    },
-
-    /* Save credentials to localStorage AND state.settings */
-    _saveCredentials: function() {
-        localStorage.setItem('aig_gist', JSON.stringify({ token: this.token, gistId: this.gistId, lastSyncAt: this.lastSyncAt }));
-        state.settings.gistToken = this.token;
-        state.settings.gistId = this.gistId;
-        localStorage.setItem('aig_settings', JSON.stringify(state.settings));
-        /* Also update connect modal fields if visible */
-        var connTokenEl = document.getElementById('connect-gist-token');
-        var connIdEl = document.getElementById('connect-gist-id');
-        if (connTokenEl && connTokenEl.offsetParent !== null) connTokenEl.value = this.token;
-        if (connIdEl && connIdEl.offsetParent !== null) connIdEl.value = this.gistId;
-    },
-
-    updateUI: function() {
-        var status = document.getElementById('sync-status');
-        var connectBtn = document.getElementById('gist-connect-btn');
-        var syncBtn = document.getElementById('gist-sync-btn');
-        var copyLinkBtn = document.getElementById('gist-copy-link-btn');
-
-        if (this.token && this.gistId) {
-            var timeStr = this.lastSyncAt ? ' · ' + this._timeAgoShort(this.lastSyncAt) : '';
-            status.innerHTML = '<i class="fa-brands fa-github"></i> Synced' + timeStr;
-            status.className = 'sync-status connected';
-            connectBtn.innerHTML = '<i class="fa-brands fa-github"></i> Gist Connected';
-            connectBtn.onclick = function() { gistSync.showConnectModal(); };
-            syncBtn.classList.remove('hidden');
-            if (copyLinkBtn) copyLinkBtn.classList.remove('hidden');
-        } else {
-            status.innerHTML = '<i class="fa-brands fa-github"></i> Not Connected';
-            status.className = 'sync-status';
-            connectBtn.innerHTML = '<i class="fa-brands fa-github"></i> Connect Gist';
-            connectBtn.onclick = function() { gistSync.showConnectModal(); };
-            syncBtn.classList.add('hidden');
-            if (copyLinkBtn) copyLinkBtn.classList.add('hidden');
-        }
-    },
-
-    _setSyncingUI: function(syncing, errorMsg) {
-        var status = document.getElementById('sync-status');
-        if (!status) return;
-        if (syncing) {
-            status.innerHTML = '<span class="sync-spinner"></span> Syncing...';
-            status.className = 'sync-status syncing';
-        } else if (errorMsg) {
-            status.innerHTML = '<i class="fa-brands fa-github"></i> Error: ' + errorMsg;
-            status.className = 'sync-status error';
-        } else if (this.token && this.gistId) {
-            var timeStr = this.lastSyncAt ? ' · ' + this._timeAgoShort(this.lastSyncAt) : '';
-            status.innerHTML = '<i class="fa-brands fa-github"></i> Synced' + timeStr;
-            status.className = 'sync-status connected';
-        }
-    },
-
-    _timeAgoShort: function(iso) {
-        var diff = Date.now() - new Date(iso).getTime();
-        var m = Math.floor(diff / 60000);
-        if (m < 1) return 'just now';
-        if (m < 60) return m + 'm ago';
-        var h = Math.floor(m / 60);
-        if (h < 24) return h + 'h ago';
-        return Math.floor(h / 24) + 'd ago';
-    },
-
-    copySyncLink: function() {
-        if (!this.gistId) { ui.toast('Connect Gist first', 'warning'); return; }
-        var link = window.location.origin + window.location.pathname + '#gist=' + this.gistId;
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(link).then(function() {
-                ui.toast('Sync link copied! Open this link on your other device.', 'success');
-            }).catch(function() { gistSync._fallbackCopy(link); });
-        } else {
-            this._fallbackCopy(link);
-        }
-    },
-
-    _fallbackCopy: function(text) {
-        var ta = document.createElement('textarea');
-        ta.value = text;
-        ta.style.cssText = 'position:fixed;left:-9999px;';
-        document.body.appendChild(ta);
-        ta.select();
-        try { document.execCommand('copy'); ui.toast('Sync link copied! Open this link on your other device.', 'success'); }
-        catch(e) { ui.toast('Could not copy. Your sync link: ' + text, 'warning'); }
-        ta.remove();
-    },
-
-    /* ---- SYNC OPERATIONS ---- */
-
-    /* Full sync: load from Gist (merge), then save to Gist */
-    syncNow: async function() {
-        if (!this.token || !this.gistId) {
-            ui.toast('Connect Gist first', 'warning');
-            this.showConnectModal();
-            return;
-        }
-        if (this._isLoading || this._isSaving) {
-            ui.toast('Sync already in progress...', 'warning');
-            return;
-        }
-        try {
-            await this._doSync();
-        } catch(e) {
-            /* Error already shown by _doSync and toast — no need to double-show */
-        }
-    },
-
-    _doSync: async function() {
-        this._setSyncingUI(true);
-        try {
-            /* Step 1: Load and merge from Gist */
-            var loaded = await this._loadFromGist();
-            /* Step 2: Push merged data back to Gist */
-            await this._saveToGist();
-            this.lastSyncAt = new Date().toISOString();
-            this._saveCredentials();
-            this._setSyncingUI(false);
-            if (loaded && loaded.added > 0) {
-                ui.toast('Synced! ' + loaded.added + ' new + ' + loaded.updated + ' updated shortcuts from Gist.', 'success');
-            } else if (loaded && loaded.updated > 0) {
-                ui.toast('Synced! ' + loaded.updated + ' shortcuts updated from Gist.', 'success');
-            } else {
-                ui.toast('Synced! Your data is up to date.', 'success');
-            }
-        } catch(e) {
-            this._setSyncingUI(false, e.message);
-            ui.toast('Sync failed: ' + e.message, 'error');
-            throw e; /* Re-throw so callers (like connectFromModal) can handle it */
-        }
-    },
-
-    /* Load from Gist and merge — called during sync and auto-pull */
-    _loadFromGist: async function() {
-        if (!this.token || !this.gistId) return null;
-        if (this._isLoading) return null; /* Prevent concurrent loads */
-        this._isLoading = true;
-        this._suppressAutoSync = true; /* Prevent save() from triggering auto-push during load */
-        try {
-            var res = await fetch('https://api.github.com/gists/' + this.gistId, {
-                headers: Object.assign({}, this._authHeader(this.token), { 'Accept': 'application/vnd.github.v3+json' })
-            });
-            if (!res.ok) {
-                var errData = {};
-                try { errData = await res.json(); } catch(e2) {}
-                if (res.status === 401) throw new Error('Invalid token');
-                if (res.status === 404) throw new Error('Gist not found');
-                throw new Error(errData.message || 'Load failed (HTTP ' + res.status + ')');
-            }
-            var data = await res.json();
-            var file = data.files && data.files['ai-giant-data.json'];
-            if (!file || !file.content) throw new Error('No data in Gist');
-            var parsed = JSON.parse(file.content);
-            if (!parsed.shortcuts || !Array.isArray(parsed.shortcuts)) throw new Error('Invalid data format in Gist');
-
-            /* Merge remote data into local */
-            var mergeResult = aiGiant.mergeImportData(parsed, true);
-            return { shortcutCount: parsed.shortcuts.length, added: mergeResult.added, updated: mergeResult.updated };
-        } catch (e) {
-            throw e;
-        } finally {
-            this._isLoading = false;
-            this._suppressAutoSync = false;
-        }
-    },
-
-    /* Load from Gist and REPLACE local data — called for new device restore */
-    loadAndReplace: async function() {
-        if (!this.token || !this.gistId) throw new Error('Not connected');
-        if (this._isLoading) throw new Error('Load already in progress');
-        this._isLoading = true;
-        this._suppressAutoSync = true;
-        try {
-            var res = await fetch('https://api.github.com/gists/' + this.gistId, {
-                headers: Object.assign({}, this._authHeader(this.token), { 'Accept': 'application/vnd.github.v3+json' })
-            });
-            if (!res.ok) {
-                var errData = {};
-                try { errData = await res.json(); } catch(e2) {}
-                if (res.status === 401) throw new Error('Invalid token. Make sure it has "gist" scope.');
-                if (res.status === 404) throw new Error('Gist not found. Check the Gist ID.');
-                throw new Error(errData.message || 'Load failed (HTTP ' + res.status + ')');
-            }
-            var data = await res.json();
-            var file = data.files && data.files['ai-giant-data.json'];
-            if (!file || !file.content) throw new Error('No data found in this Gist');
-            var parsed = JSON.parse(file.content);
-            if (!parsed.shortcuts || !Array.isArray(parsed.shortcuts)) throw new Error('Invalid data format in Gist');
-
-            aiGiant.replaceData(parsed);
-            return parsed.shortcuts.length;
-        } finally {
-            this._isLoading = false;
-            this._suppressAutoSync = false;
-        }
-    },
-
-    /* Save current data to Gist */
-    _saveToGist: async function() {
-        if (!this.token || !this.gistId) return;
-        if (this._isSaving) return;
-        this._isSaving = true;
-        try {
-            var content = JSON.stringify(aiGiant.getExportData(), null, 2);
-            var res = await fetch('https://api.github.com/gists/' + this.gistId, {
-                method: 'PATCH',
-                headers: Object.assign({}, this._authHeader(this.token), { 'Content-Type': 'application/json', 'Accept': 'application/vnd.github.v3+json' }),
-                body: JSON.stringify({ files: { 'ai-giant-data.json': { content: content } } })
-            });
-            if (!res.ok) {
-                var errData = {};
-                try { errData = await res.json(); } catch(e2) {}
-                if (res.status === 401) throw new Error('Token expired or invalid');
-                throw new Error(errData.message || 'Save failed (HTTP ' + res.status + ')');
-            }
-            this.lastSyncAt = new Date().toISOString();
-            this._saveCredentials();
-        } finally {
-            this._isSaving = false;
-        }
-    },
-
-    /* Auto-sync: debounced save triggered by local data changes */
-    requestAutoSync: function() {
-        if (!this.token || !this.gistId) return;
-        if (this._suppressAutoSync) return; /* Don't auto-push during Gist load */
-        if (this._isSaving) return;
-        clearTimeout(this._syncDebounce);
-        this._syncDebounce = setTimeout(function() {
-            gistSync._saveToGist().then(function() {
-                gistSync.updateUI();
-            }).catch(function(e) {
-                gistSync._setSyncingUI(false, e.message);
-            });
-        }, 2000);
-    },
-
-    /* Auto-pull on page load — just load and merge, no push */
-    autoPull: function() {
-        if (!this.token || !this.gistId) return;
-        this._loadFromGist().then(function(result) {
-            if (result) {
-                gistSync.lastSyncAt = new Date().toISOString();
-                gistSync._saveCredentials();
-                gistSync.updateUI();
-            }
-        }).catch(function(e) {
-            console.warn('Auto-pull failed:', e.message);
-            /* Don't show error toast for auto-pull — too annoying on page load */
-        });
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STATE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      state = { ...state, ...parsed };
     }
-};
+  } catch(e) {}
+}
 
-/* ===== AI GIANT CORE ===== */
-var aiGiant = {
-    DEFAULT_DATA: {
-        _schemaVersion: SCHEMA_VERSION,
-        shortcuts: [],
-        groups: ['All Tools','Education','Tech','Productivity','Research','Social','Writing','Design','Dev Tools'],
-        apiKeys: { openai:'', anthropic:'', google:'', deepseek:'', mistral:'', groq:'', cohere:'', perplexity:'' },
-        customProviders: [],
-        visitHistory: []
-    },
-    data: null,
-    searchQuery: '',
-    activeGroup: 'All Tools',
-    dragSrcId: null,
-    _pendingImport: null,
+// ══════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════
+function init() {
+  loadState();
+  // Check URL params for gist share
+  const params = new URLSearchParams(location.search);
+  const sharedGist = params.get('gist');
+  if (sharedGist && !state.initialized) {
+    document.getElementById('wc-gist-id').value = sharedGist;
+  }
 
-    _isNewDevice: function() {
-        var hasData = !!localStorage.getItem('aig_v6');
-        var hasGist = !!localStorage.getItem('aig_gist');
-        var hasSettings = !!localStorage.getItem('aig_settings');
-        return !hasData && !hasGist && !hasSettings;
-    },
+  if (!state.initialized) {
+    document.getElementById('welcome-screen').classList.remove('hidden');
+    return;
+  }
+  if (state.lockEnabled && state.passphrase) {
+    document.getElementById('lock-screen').classList.remove('hidden');
+    return;
+  }
+  bootApp();
+}
 
-    init: function() {
-        var saved = localStorage.getItem('aig_v6');
-        if (saved) {
-            try {
-                var parsed = JSON.parse(saved);
-                this.data = Object.assign({}, JSON.parse(JSON.stringify(this.DEFAULT_DATA)), parsed);
-                this.data._schemaVersion = SCHEMA_VERSION;
-            } catch(e) {
-                this.data = JSON.parse(JSON.stringify(this.DEFAULT_DATA));
-            }
-        } else {
-            var old = localStorage.getItem('aig_v5') || localStorage.getItem('aig_v4') || localStorage.getItem('aig_v3') || localStorage.getItem('aig_v2');
-            if (old) {
-                try {
-                    var parsed2 = JSON.parse(old);
-                    this.data = Object.assign({}, JSON.parse(JSON.stringify(this.DEFAULT_DATA)), parsed2, { _schemaVersion: SCHEMA_VERSION });
-                    ui.toast('Migrated from previous version', 'success');
-                } catch(e) {
-                    this.data = JSON.parse(JSON.stringify(this.DEFAULT_DATA));
-                }
-            } else {
-                this.data = JSON.parse(JSON.stringify(this.DEFAULT_DATA));
-            }
-        }
-        if (this.data.groups.indexOf('All Tools') === -1) this.data.groups.unshift('All Tools');
-        if (!this.data.visitHistory) this.data.visitHistory = [];
-        if (!this.data.customProviders) this.data.customProviders = [];
-        this.render();
-        gistSync.init();
-        /* Auto-pull from Gist if connected (merge remote changes into local) */
-        if (gistSync.token && gistSync.gistId) {
-            gistSync.autoPull();
-        }
-    },
+function bootApp() {
+  document.getElementById('welcome-screen').classList.add('hidden');
+  document.getElementById('lock-screen').classList.add('hidden');
+  renderAll();
+  updateSyncStatus();
+}
 
-    save: function() {
-        localStorage.setItem('aig_v6', JSON.stringify(this.data));
-        this.updateBadge();
-        gistSync.requestAutoSync();
-    },
+// ══════════════════════════════════════════════
+//  WELCOME SCREEN
+// ══════════════════════════════════════════════
+async function welcomeRestore() {
+  const token = document.getElementById('wc-token').value.trim();
+  const gistId = document.getElementById('wc-gist-id').value.trim();
+  const errEl = document.getElementById('wc-restore-error');
+  const loadEl = document.getElementById('wc-restore-loading');
+  errEl.style.display = 'none';
+  if (!token) { errEl.textContent = 'Please enter your GitHub Personal Access Token.'; errEl.style.display = 'block'; return; }
+  if (!gistId) { errEl.textContent = 'Please enter your Gist ID.'; errEl.style.display = 'block'; return; }
+  loadEl.style.display = 'block';
+  try {
+    const data = await fetchGist(token, gistId);
+    applyGistData(data, token, gistId);
+    state.initialized = true;
+    saveState();
+    loadEl.style.display = 'none';
+    bootApp();
+  } catch(e) {
+    loadEl.style.display = 'none';
+    errEl.textContent = 'Could not connect: ' + e.message;
+    errEl.style.display = 'block';
+  }
+}
 
-    updateBadge: function() {
-        var total = document.getElementById('aig-total-count');
-        var n = (this.data && this.data.shortcuts) ? this.data.shortcuts.length : 0;
-        if (total) total.textContent = n;
-    },
+function welcomeStartFresh() {
+  state.initialized = true;
+  saveState();
+  bootApp();
+}
 
-    getFavicon: function(url) {
-        try { return 'https://www.google.com/s2/favicons?sz=64&domain_url=' + new URL(url).hostname; }
-        catch(e) { return null; }
-    },
+function openSessionImport(fromWelcome) {
+  sessionImportFromWelcome = fromWelcome;
+  document.getElementById('session-import-preview').style.display = 'none';
+  document.getElementById('session-file-input').value = '';
+  openModal('session-import-modal');
+}
 
-    previewFavicon: function() {
-        var url = document.getElementById('sc-url').value.trim();
-        var preview = document.getElementById('sc-favicon-preview');
-        if (!preview) return;
-        var f = this.getFavicon(url);
-        if (f) {
-            preview.innerHTML = '';
-            var img = document.createElement('img');
-            img.src = f;
-            img.style.cssText = 'width:26px;height:26px;object-fit:contain;border-radius:4px;';
-            img.onerror = function() {
-                preview.innerHTML = '<i class="fa-solid fa-globe" style="color:var(--text-muted);font-size:13px;"></i>';
-            };
-            preview.appendChild(img);
-        } else {
-            preview.innerHTML = '<i class="fa-solid fa-globe" style="color:var(--text-muted);font-size:13px;"></i>';
-        }
-    },
+// ══════════════════════════════════════════════
+//  LOCK
+// ══════════════════════════════════════════════
+function doUnlock() {
+  const val = document.getElementById('lock-passphrase').value;
+  const errEl = document.getElementById('lock-error');
+  if (val === state.passphrase) {
+    errEl.style.display = 'none';
+    document.getElementById('lock-screen').classList.add('hidden');
+    bootApp();
+  } else {
+    errEl.style.display = 'block';
+  }
+}
 
-    recordVisit: function(s) {
-        if (!this.data.visitHistory) this.data.visitHistory = [];
-        this.data.visitHistory.unshift({ id: s.id, name: s.name, url: s.url, visitedAt: new Date().toISOString() });
-        if (this.data.visitHistory.length > 200) this.data.visitHistory.length = 200;
-        this.save();
-    },
+function enableLock() {
+  const p = document.getElementById('settings-passphrase').value;
+  const p2 = document.getElementById('settings-passphrase-confirm').value;
+  if (!p) { showToast('Enter a passphrase', 'error'); return; }
+  if (p !== p2) { showToast('Passphrases do not match', 'error'); return; }
+  state.passphrase = p;
+  state.lockEnabled = true;
+  saveState();
+  document.getElementById('privacy-status-badge').className = 'privacy-indicator on';
+  document.getElementById('privacy-status-badge').textContent = 'Enabled';
+  showToast('Privacy lock enabled ✓', 'success');
+}
 
-    searchHistory: function(q) {
-        var box = document.getElementById('history-results');
-        if (!q) { box.style.display = 'none'; return; }
-        var lq = q.toLowerCase();
-        var matches = (this.data.visitHistory || []).filter(function(v) {
-            return v.name.toLowerCase().indexOf(lq) !== -1 || v.url.toLowerCase().indexOf(lq) !== -1;
-        }).slice(0, 8);
-        if (!matches.length) { box.style.display = 'none'; return; }
-        box.innerHTML = '';
-        for (var i = 0; i < matches.length; i++) {
-            (function(v) {
-                var ago = aiGiant._timeAgo(v.visitedAt);
-                var f = aiGiant.getFavicon(v.url);
-                var item = document.createElement('div');
-                item.className = 'history-result-item';
-                var logoHtml = f ? '<img src="' + f + '" style="width:16px;height:16px;object-fit:contain;border-radius:3px;" onerror="this.style.display=\'none\'">' : '';
-                item.innerHTML = logoHtml + '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + aiGiant._esc(v.name) + '</span><span style="font-size:10px;color:var(--text-muted);flex-shrink:0;">' + ago + '</span>';
-                item.onclick = function() {
-                    aiGiant.openSite({ url: v.url, openMode: 'same' });
-                    box.style.display = 'none';
-                    document.getElementById('aig-history-search').value = '';
-                };
-                box.appendChild(item);
-            })(matches[i]);
-        }
-        box.style.display = 'block';
-    },
+function disableLock() {
+  state.passphrase = '';
+  state.lockEnabled = false;
+  saveState();
+  document.getElementById('privacy-status-badge').className = 'privacy-indicator off';
+  document.getElementById('privacy-status-badge').textContent = 'Disabled';
+  showToast('Privacy lock disabled');
+}
 
-    _timeAgo: function(iso) {
-        var diff = Date.now() - new Date(iso).getTime();
-        var m = Math.floor(diff / 60000);
-        if (m < 1) return 'just now';
-        if (m < 60) return m + 'm ago';
-        var h = Math.floor(m / 60);
-        if (h < 24) return h + 'h ago';
-        return Math.floor(h / 24) + 'd ago';
-    },
+// ══════════════════════════════════════════════
+//  RENDER
+// ══════════════════════════════════════════════
+function renderAll() {
+  renderGroupsBar();
+  renderGrid();
+  renderHistory();
+  updateGroupsDatalist();
+}
 
-    _esc: function(str) {
-        if (!str) return '';
-        return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-    },
+function renderGroupsBar() {
+  const bar = document.getElementById('aig-groups-bar');
+  const allGroups = ['All', ...state.groups];
+  bar.innerHTML = allGroups.map(g =>
+    `<span class="group-chip${state.activeGroup === g ? ' active' : ''}" onclick="setGroup('${esc(g)}')">${esc(g)}</span>`
+  ).join('');
+}
 
-    openSite: function(s) {
-        var safeUrl = s.url.startsWith('http') ? s.url : 'https://' + s.url;
-        if (s.openMode === 'new') {
-            window.open(safeUrl, '_blank', 'noopener,noreferrer');
-        } else {
-            window.location.href = safeUrl;
-        }
-        this.recordVisit(s);
-    },
+function setGroup(g) {
+  state.activeGroup = g;
+  renderGroupsBar();
+  renderGrid();
+}
 
-    openSiteFromElement: function(el) {
-        var url = el.getAttribute('data-url');
-        var mode = el.getAttribute('data-mode') || 'same';
-        if (url) this.openSite({ url: url, openMode: mode });
-    },
+function renderGrid() {
+  const grid = document.getElementById('aig-grid');
+  const query = document.getElementById('search-input').value.toLowerCase().trim();
+  let items = [...state.shortcuts];
 
-    render: function() {
-        this.renderGroupsBar();
-        this.renderGrid();
-        this.updateBadge();
-    },
+  // Filter by group
+  if (state.activeGroup !== 'All') {
+    items = items.filter(s => (s.group||'') === state.activeGroup);
+  }
 
-    renderGroupsBar: function() {
-        var bar = document.getElementById('aig-groups-bar');
-        if (!bar) return;
-        bar.innerHTML = '';
-        for (var i = 0; i < this.data.groups.length; i++) {
-            var g = this.data.groups[i];
-            var btn = document.createElement('button');
-            btn.className = 'group-chip' + (this.activeGroup === g ? ' active' : '');
-            var icon = g === 'All Tools' ? '<i class="fa-solid fa-border-all"></i> ' : '';
-            btn.innerHTML = icon + this._esc(g);
-            btn.setAttribute('data-group', g);
-            btn.onclick = function() { aiGiant.setGroup(this.getAttribute('data-group')); };
-            bar.appendChild(btn);
-        }
-    },
+  // Filter by search
+  if (query) {
+    items = items.filter(s =>
+      s.name.toLowerCase().includes(query) ||
+      (s.desc||'').toLowerCase().includes(query) ||
+      (s.url||'').toLowerCase().includes(query) ||
+      (s.group||'').toLowerCase().includes(query)
+    );
+  }
 
-    setGroup: function(g) { this.activeGroup = g; this.render(); },
+  // Priority first
+  items.sort((a,b) => (b.priority?1:0) - (a.priority?1:0));
 
-    search: function(q) { this.searchQuery = q.toLowerCase(); this.renderGrid(); },
+  document.getElementById('aig-total-count').textContent = state.shortcuts.length;
 
-    getFilteredShortcuts: function() {
-        var self = this;
-        return this.data.shortcuts.filter(function(s) {
-            var gm = self.activeGroup === 'All Tools' || s.group === self.activeGroup;
-            var sm = !self.searchQuery || s.name.toLowerCase().indexOf(self.searchQuery) !== -1 || (s.desc || '').toLowerCase().indexOf(self.searchQuery) !== -1 || (s.url || '').toLowerCase().indexOf(self.searchQuery) !== -1;
-            return gm && sm;
-        });
-    },
+  if (items.length === 0) {
+    grid.innerHTML = `<div class="empty-state">
+      <div class="es-icon">${query ? '🔍' : '🚀'}</div>
+      <h3>${query ? 'No results found' : 'No shortcuts yet'}</h3>
+      <p>${query ? 'Try a different search term' : 'Click "+ Add" to add your first AI shortcut'}</p>
+    </div>`;
+    return;
+  }
 
-    renderGrid: function() {
-        var grid = document.getElementById('aig-grid');
-        if (!grid) return;
-        var filtered = this.getFilteredShortcuts();
-        if (!filtered.length) {
-            if (!this.data.shortcuts.length) {
-                grid.innerHTML = '<div class="aig-empty">' +
-                    '<i class="fa-solid fa-rocket empty-icon"></i>' +
-                    '<h3>Your AI Hub is empty</h3>' +
-                    '<p>Get started by adding shortcuts or restoring from the cloud</p>' +
-                    '<div class="restore-options">' +
-                    '<div class="restore-card" onclick="aiGiant.openAddModal()"><i class="fa-solid fa-plus"></i><div class="rc-title">Add Shortcut</div><div class="rc-desc">Manually add your first AI tool</div></div>' +
-                    '<div class="restore-card" onclick="gistSync.showConnectModal()"><i class="fa-brands fa-github"></i><div class="rc-title">Sync from Gist</div><div class="rc-desc">Restore from your GitHub Gist backup</div></div>' +
-                    '<div class="restore-card" onclick="aiGiant.importSession()"><i class="fa-solid fa-file-import"></i><div class="rc-title">Import File</div><div class="rc-desc">Load from an exported session file</div></div>' +
-                    '</div></div>';
-            } else {
-                grid.innerHTML = '<div class="aig-empty"><i class="fa-solid fa-magnifying-glass empty-icon"></i><h3>No results</h3><p>Try a different search or group filter.</p></div>';
-            }
-            return;
-        }
-        if (this.activeGroup === 'All Tools' && !this.searchQuery) {
-            var byGroup = {};
-            for (var i = 0; i < filtered.length; i++) {
-                var s = filtered[i];
-                if (!byGroup[s.group]) byGroup[s.group] = [];
-                byGroup[s.group].push(s);
-            }
-            Object.keys(byGroup).forEach(function(k) {
-                byGroup[k].sort(function(a, b) { return (b.priority ? 1 : 0) - (a.priority ? 1 : 0); });
-            });
-            var groupOrder = this.data.groups.filter(function(g) { return g !== 'All Tools'; });
-            var orderedGroups = groupOrder.filter(function(g) { return byGroup[g]; }).concat(
-                Object.keys(byGroup).filter(function(g) { return groupOrder.indexOf(g) === -1; })
-            );
-            grid.innerHTML = '';
-            for (var j = 0; j < orderedGroups.length; j++) {
-                var gn = orderedGroups[j];
-                var items = byGroup[gn];
-                var section = document.createElement('div');
-                section.className = 'group-section';
-                section.innerHTML = '<div class="group-section-title"><i class="fa-solid fa-folder" style="color:var(--accent)"></i> ' + this._esc(gn) + ' <span>' + items.length + ' item' + (items.length !== 1 ? 's' : '') + '</span></div>';
-                var innerGrid = document.createElement('div');
-                innerGrid.className = 'shortcuts-grid';
-                innerGrid.setAttribute('data-group', gn);
-                this.appendCards(innerGrid, items);
-                section.appendChild(innerGrid);
-                grid.appendChild(section);
-            }
-        } else {
-            var sorted = filtered.slice().sort(function(a, b) { return (b.priority ? 1 : 0) - (a.priority ? 1 : 0); });
-            grid.innerHTML = '';
-            var singleGrid = document.createElement('div');
-            singleGrid.className = 'shortcuts-grid';
-            singleGrid.setAttribute('data-group', this.activeGroup);
-            this.appendCards(singleGrid, sorted);
-            grid.appendChild(singleGrid);
-        }
-    },
+  grid.innerHTML = items.map(s => shortcutCard(s, query)).join('');
+}
 
-    appendCards: function(container, items) {
-        for (var i = 0; i < items.length; i++) {
-            container.appendChild(this.createCard(items[i]));
-        }
-    },
+function highlight(text, query) {
+  if (!query) return esc(text);
+  const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi');
+  return esc(text).replace(regex, '<span class="hl">$1</span>');
+}
 
-    createCard: function(s) {
-        var self = this;
-        var card = document.createElement('div');
-        card.className = 'shortcut-card';
-        card.draggable = true;
-        card.setAttribute('data-id', s.id);
-        var safeUrl = s.url.startsWith('http') ? s.url : 'https://' + s.url;
-        card.setAttribute('data-url', safeUrl);
-        card.setAttribute('data-mode', s.openMode || 'same');
+function shortcutCard(s, query='') {
+  const faviconUrl = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(s.url)}&sz=64`;
+  return `<div class="sc-card${s.priority?' priority':''}" onclick="openShortcut('${esc(s.id)}', event)" data-id="${esc(s.id)}">
+    <div class="sc-actions">
+      <button class="sc-action-btn edit" onclick="openEditModal('${esc(s.id)}',event)" title="Edit">✏️</button>
+      <button class="sc-action-btn" onclick="deleteShortcut('${esc(s.id)}',event)" title="Delete">🗑</button>
+    </div>
+    <div class="sc-card-header">
+      <div class="sc-favicon"><img src="${faviconUrl}" onerror="this.parentNode.innerHTML='🌐'" loading="lazy"/></div>
+      <div style="flex:1;min-width:0;">
+        <div class="sc-title">${highlight(s.name, query)}</div>
+        ${s.group ? `<span class="sc-badge">${esc(s.group)}</span>` : ''}
+      </div>
+    </div>
+    ${s.desc ? `<div class="sc-desc">${highlight(s.desc, query)}</div>` : ''}
+    <div class="sc-url">${esc(s.url)}</div>
+  </div>`;
+}
 
-        // Priority pin
-        if (s.priority) {
-            var pin = document.createElement('span');
-            pin.className = 'priority-pin';
-            pin.title = 'Priority';
-            pin.innerHTML = '<i class="fa-solid fa-star"></i>';
-            card.appendChild(pin);
-        }
+function renderHistory() {
+  const el = document.getElementById('history-results');
+  if (!state.history.length) { el.innerHTML = '<span style="font-size:11px;color:var(--text-muted)">No recent visits</span>'; return; }
+  el.innerHTML = state.history.slice(0,8).map(h =>
+    `<a class="history-chip" href="${esc(h.url)}" target="_blank" title="${esc(h.name)}" onclick="logVisit('${esc(h.id)}')">${esc(h.name)}</a>`
+  ).join('');
+}
 
-        // Action buttons
-        var actions = document.createElement('div');
-        actions.className = 'shortcut-actions';
-        var editBtn = document.createElement('button');
-        editBtn.className = 'sc-btn edit';
-        editBtn.title = 'Edit';
-        editBtn.innerHTML = '<i class="fa-solid fa-pen"></i>';
-        editBtn.onclick = function(e) { e.stopPropagation(); aiGiant.openEditModal(s.id); };
-        var delBtn = document.createElement('button');
-        delBtn.className = 'sc-btn';
-        delBtn.title = 'Delete';
-        delBtn.innerHTML = '<i class="fa-solid fa-trash"></i>';
-        delBtn.onclick = function(e) { e.stopPropagation(); aiGiant.deleteShortcut(s.id); };
-        actions.appendChild(editBtn);
-        actions.appendChild(delBtn);
-        card.appendChild(actions);
+function updateGroupsDatalist() {
+  const dl = document.getElementById('groups-datalist');
+  dl.innerHTML = state.groups.map(g => `<option value="${esc(g)}"/>`).join('');
+}
 
-        // Top section (favicon + name/url)
-        var top = document.createElement('div');
-        top.className = 'shortcut-card-top';
-        var fav = s.favicon || this.getFavicon(s.url);
-        if (fav) {
-            var img = document.createElement('img');
-            img.className = 'shortcut-logo';
-            img.src = fav;
-            img.alt = '';
-            img.onerror = function() {
-                var fb = document.createElement('div');
-                fb.className = 'shortcut-logo-fallback';
-                fb.textContent = (s.name || '?')[0].toUpperCase();
-                img.parentNode.replaceChild(fb, img);
-            };
-            top.appendChild(img);
-        } else {
-            var fb2 = document.createElement('div');
-            fb2.className = 'shortcut-logo-fallback';
-            fb2.textContent = (s.name || '?')[0].toUpperCase();
-            top.appendChild(fb2);
-        }
-        var info = document.createElement('div');
-        info.style.minWidth = '0';
-        info.innerHTML = '<div class="shortcut-name">' + this._esc(s.name) + '</div><div class="shortcut-url">' + this._esc(safeUrl) + '</div>';
-        top.appendChild(info);
-        card.appendChild(top);
+// ══════════════════════════════════════════════
+//  SHORTCUTS CRUD
+// ══════════════════════════════════════════════
+function openAddModal(prefill) {
+  editingId = null;
+  document.getElementById('add-modal-title').textContent = '＋ Add Shortcut';
+  document.getElementById('add-modal-btn').textContent = 'Add Shortcut';
+  document.getElementById('sc-delete-btn').style.display = 'none';
+  document.getElementById('sc-name').value = prefill?.name || '';
+  document.getElementById('sc-url').value = prefill?.url || '';
+  document.getElementById('sc-desc').value = prefill?.desc || '';
+  document.getElementById('sc-group').value = prefill?.group || '';
+  document.getElementById('sc-open-mode').value = prefill?.openMode || '_blank';
+  document.getElementById('sc-priority').checked = false;
+  document.getElementById('sc-favicon-preview').innerHTML = '🌐';
+  if (prefill?.url) previewFavicon();
+  openModal('add-shortcut-modal');
+}
 
-        // Description
-        if (s.desc) {
-            var descEl = document.createElement('div');
-            descEl.className = 'shortcut-desc';
-            descEl.textContent = s.desc;
-            card.appendChild(descEl);
-        }
+function openEditModal(id, e) {
+  if(e) e.stopPropagation();
+  const s = state.shortcuts.find(x=>x.id===id);
+  if (!s) return;
+  editingId = id;
+  document.getElementById('add-modal-title').textContent = '✏️ Edit Shortcut';
+  document.getElementById('add-modal-btn').textContent = 'Save Changes';
+  document.getElementById('sc-delete-btn').style.display = 'inline-flex';
+  document.getElementById('sc-name').value = s.name;
+  document.getElementById('sc-url').value = s.url;
+  document.getElementById('sc-desc').value = s.desc || '';
+  document.getElementById('sc-group').value = s.group || '';
+  document.getElementById('sc-open-mode').value = s.openMode || '_blank';
+  document.getElementById('sc-priority').checked = !!s.priority;
+  previewFavicon();
+  openModal('add-shortcut-modal');
+}
 
-        // Badges
-        var badges = document.createElement('div');
-        badges.style.cssText = 'display:flex;align-items:center;gap:5px;flex-wrap:wrap;';
-        var groupBadge = document.createElement('span');
-        groupBadge.className = 'shortcut-badge';
-        groupBadge.textContent = s.group;
-        badges.appendChild(groupBadge);
-        if (s.openMode === 'new') {
-            var modeBadge = document.createElement('span');
-            modeBadge.className = 'shortcut-badge';
-            modeBadge.style.cssText = 'background:rgba(245,158,11,.1);color:var(--warning);border-color:rgba(245,158,11,.2);';
-            modeBadge.textContent = 'new window';
-            badges.appendChild(modeBadge);
-        }
-        card.appendChild(badges);
+function saveShortcut() {
+  const name = document.getElementById('sc-name').value.trim();
+  const url = document.getElementById('sc-url').value.trim();
+  if (!name) { showToast('Name is required', 'error'); return; }
+  if (!url || !isValidUrl(url)) { showToast('Valid URL is required', 'error'); return; }
+  const sc = {
+    id: editingId || uid(),
+    name, url,
+    desc: document.getElementById('sc-desc').value.trim(),
+    group: document.getElementById('sc-group').value.trim(),
+    openMode: document.getElementById('sc-open-mode').value,
+    priority: document.getElementById('sc-priority').checked,
+    createdAt: editingId ? (state.shortcuts.find(x=>x.id===editingId)?.createdAt||Date.now()) : Date.now(),
+  };
+  if (editingId) {
+    const idx = state.shortcuts.findIndex(x=>x.id===editingId);
+    state.shortcuts[idx] = sc;
+    showToast('Shortcut updated ✓', 'success');
+  } else {
+    state.shortcuts.push(sc);
+    showToast('Shortcut added ✓', 'success');
+  }
+  saveState();
+  autoSync();
+  renderAll();
+  closeModal('add-shortcut-modal');
+}
 
-        // Click handler
-        card.onclick = function() { aiGiant.openSiteFromElement(card); };
+function deleteShortcut(id, e) {
+  if(e) e.stopPropagation();
+  if (!confirm('Delete this shortcut?')) return;
+  state.shortcuts = state.shortcuts.filter(x=>x.id!==id);
+  saveState();
+  autoSync();
+  renderAll();
+  showToast('Deleted');
+}
 
-        // Drag handlers
-        card.ondragstart = function(e) { self.dragStart(e); };
-        card.ondragend = function(e) { self.dragEnd(e); };
-        card.ondragover = function(e) { self.dragOver(e); };
-        card.ondrop = function(e) { self.drop(e); };
-        card.ondragleave = function(e) { self.dragLeave(e); };
+function deleteEditingShortcut() {
+  if (!editingId) return;
+  deleteShortcut(editingId);
+  closeModal('add-shortcut-modal');
+}
 
-        return card;
-    },
+function openShortcut(id, e) {
+  const s = state.shortcuts.find(x=>x.id===id);
+  if (!s) return;
+  // Only open if not clicking action buttons
+  if (e.target.closest('.sc-actions')) return;
+  logVisit(id);
+  window.open(s.url, s.openMode||'_blank');
+}
 
-    // Drag and Drop
-    dragStart: function(e) {
-        var card = e.currentTarget;
-        this.dragSrcId = parseInt(card.getAttribute('data-id'));
-        card.classList.add('dragging');
-        e.dataTransfer.effectAllowed = 'move';
-        e.dataTransfer.setData('text/plain', String(this.dragSrcId));
-    },
+function logVisit(id) {
+  const s = state.shortcuts.find(x=>x.id===id);
+  if (!s) return;
+  state.history = state.history.filter(h=>h.id!==id);
+  state.history.unshift({ id: s.id, name: s.name, url: s.url });
+  if (state.history.length > 20) state.history = state.history.slice(0,20);
+  saveState();
+  renderHistory();
+}
 
-    dragEnd: function(e) {
-        e.currentTarget.classList.remove('dragging');
-        var cards = document.querySelectorAll('.shortcut-card');
-        for (var i = 0; i < cards.length; i++) cards[i].classList.remove('drag-over');
-    },
+// ══════════════════════════════════════════════
+//  GROUPS
+// ══════════════════════════════════════════════
+function openGroupsModal() {
+  renderGroupsList();
+  openModal('groups-modal');
+}
 
-    dragOver: function(e) {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = 'move';
-        var card = e.currentTarget;
-        if (parseInt(card.getAttribute('data-id')) !== this.dragSrcId) card.classList.add('drag-over');
-    },
+function renderGroupsList() {
+  const el = document.getElementById('groups-list');
+  if (!state.groups.length) { el.innerHTML = '<p style="font-size:12px;color:var(--text-muted)">No custom groups yet.</p>'; return; }
+  el.innerHTML = state.groups.map(g =>
+    `<div class="group-item">
+      <span>${esc(g)}</span>
+      <button class="btn btn-ghost btn-sm" onclick="deleteGroup('${esc(g)}')">🗑 Remove</button>
+    </div>`
+  ).join('');
+}
 
-    dragLeave: function(e) {
-        e.currentTarget.classList.remove('drag-over');
-    },
+function addGroup() {
+  const val = document.getElementById('new-group-input').value.trim();
+  if (!val) return;
+  if (state.groups.includes(val)) { showToast('Group already exists', 'error'); return; }
+  state.groups.push(val);
+  document.getElementById('new-group-input').value = '';
+  saveState();
+  renderGroupsList();
+  renderGroupsBar();
+  updateGroupsDatalist();
+  showToast('Group added ✓', 'success');
+}
 
-    drop: function(e) {
-        e.preventDefault();
-        var targetId = parseInt(e.currentTarget.getAttribute('data-id'));
-        if (!targetId || targetId === this.dragSrcId) return;
-        e.currentTarget.classList.remove('drag-over');
-        var self = this;
-        var src = this.data.shortcuts.findIndex(function(s) { return s.id === self.dragSrcId; });
-        var tgt = this.data.shortcuts.findIndex(function(s) { return s.id === targetId; });
-        if (src === -1 || tgt === -1) return;
-        var item = this.data.shortcuts.splice(src, 1)[0];
-        this.data.shortcuts.splice(tgt, 0, item);
-        this.save();
-        this.renderGrid();
-    },
+function deleteGroup(g) {
+  if (!confirm(`Delete group "${g}"? Shortcuts in this group won't be deleted.`)) return;
+  state.groups = state.groups.filter(x=>x!==g);
+  state.shortcuts.forEach(s => { if(s.group===g) s.group=''; });
+  if (state.activeGroup===g) state.activeGroup = 'All';
+  saveState();
+  renderGroupsList();
+  renderAll();
+}
 
-    deleteShortcut: function(id) {
-        if (!confirm('Delete this shortcut?')) return;
-        this.data.shortcuts = this.data.shortcuts.filter(function(s) { return s.id !== id; });
-        this.save();
-        this.render();
-        ui.toast('Shortcut removed');
-    },
+// ══════════════════════════════════════════════
+//  API KEYS
+// ══════════════════════════════════════════════
+const DEFAULT_PROVIDERS = ['OpenAI', 'Anthropic', 'Google Gemini', 'Mistral', 'Cohere'];
 
-    _populateGroupSelect: function() {
-        var sel = document.getElementById('sc-group');
-        sel.innerHTML = '';
-        var groups = this.data.groups.filter(function(g) { return g !== 'All Tools'; });
-        for (var i = 0; i < groups.length; i++) {
-            var opt = document.createElement('option');
-            opt.value = groups[i];
-            opt.textContent = groups[i];
-            sel.appendChild(opt);
-        }
-    },
+function openApiKeysModal() {
+  renderApiKeysList();
+  openModal('api-keys-modal');
+}
 
-    openAddModal: function() {
-        document.getElementById('sc-edit-id').value = '';
-        document.getElementById('add-modal-title').innerHTML = '<i class="fa-solid fa-plus" style="color:var(--accent);"></i> Add Shortcut';
-        document.getElementById('add-modal-btn-label').textContent = 'Add Shortcut';
-        document.getElementById('sc-name').value = '';
-        document.getElementById('sc-url').value = '';
-        document.getElementById('sc-desc').value = '';
-        document.getElementById('sc-priority').checked = false;
-        document.getElementById('sc-open-mode').value = 'same';
-        document.getElementById('sc-favicon-preview').innerHTML = '<i class="fa-solid fa-globe" style="color:var(--text-muted);font-size:13px;"></i>';
-        this._populateGroupSelect();
-        document.getElementById('add-shortcut-modal').style.display = 'flex';
-        setTimeout(function() { document.getElementById('sc-name').focus(); }, 100);
-    },
+function renderApiKeysList() {
+  const el = document.getElementById('api-keys-list');
+  el.innerHTML = DEFAULT_PROVIDERS.map(p =>
+    `<div class="api-key-row">
+      <label>${esc(p)}</label>
+      <input type="password" class="form-control" data-provider="${esc(p)}" value="${esc(state.apiKeys[p]||'')}" placeholder="API key…"/>
+      <button class="btn btn-ghost btn-sm" onclick="toggleShowKey(this)">Show</button>
+    </div>`
+  ).join('');
+  // Custom providers
+  Object.keys(state.apiKeys).filter(k=>!DEFAULT_PROVIDERS.includes(k)).forEach(p => {
+    el.innerHTML += `<div class="api-key-row">
+      <label>${esc(p)}</label>
+      <input type="password" class="form-control" data-provider="${esc(p)}" value="${esc(state.apiKeys[p]||'')}" placeholder="API key…"/>
+      <button class="btn btn-ghost btn-sm" onclick="toggleShowKey(this)">Show</button>
+    </div>`;
+  });
+}
 
-    openEditModal: function(id) {
-        var s = this.data.shortcuts.find(function(x) { return x.id === id; });
-        if (!s) return;
-        document.getElementById('sc-edit-id').value = id;
-        document.getElementById('add-modal-title').innerHTML = '<i class="fa-solid fa-pen" style="color:var(--accent);"></i> Edit Shortcut';
-        document.getElementById('add-modal-btn-label').textContent = 'Save Changes';
-        document.getElementById('sc-name').value = s.name;
-        document.getElementById('sc-url').value = s.url;
-        document.getElementById('sc-desc').value = s.desc || '';
-        document.getElementById('sc-priority').checked = !!s.priority;
-        document.getElementById('sc-open-mode').value = s.openMode || 'same';
-        this._populateGroupSelect();
-        document.getElementById('sc-group').value = s.group;
-        this.previewFavicon();
-        document.getElementById('add-shortcut-modal').style.display = 'flex';
-    },
+function toggleShowKey(btn) {
+  const input = btn.previousElementSibling;
+  if (input.type === 'password') { input.type = 'text'; btn.textContent = 'Hide'; }
+  else { input.type = 'password'; btn.textContent = 'Show'; }
+}
 
-    closeAddModal: function() { document.getElementById('add-shortcut-modal').style.display = 'none'; },
+function addApiKey() {
+  const name = document.getElementById('api-provider-name').value.trim();
+  const key = document.getElementById('api-provider-key').value.trim();
+  if (!name || !key) { showToast('Both name and key are required', 'error'); return; }
+  state.apiKeys[name] = key;
+  document.getElementById('api-provider-name').value = '';
+  document.getElementById('api-provider-key').value = '';
+  saveState();
+  renderApiKeysList();
+  showToast('API key added ✓', 'success');
+}
 
-    saveShortcut: function() {
-        var name = document.getElementById('sc-name').value.trim();
-        var url = document.getElementById('sc-url').value.trim();
-        var desc = document.getElementById('sc-desc').value.trim();
-        var group = document.getElementById('sc-group').value;
-        var priority = document.getElementById('sc-priority').checked;
-        var openMode = document.getElementById('sc-open-mode').value;
-        var editId = document.getElementById('sc-edit-id').value;
-        if (!name) { ui.toast('Please enter a name', 'error'); return; }
-        if (!url) { ui.toast('Please enter a URL', 'error'); return; }
-        var cleanUrl = url.startsWith('http') ? url : 'https://' + url;
-        if (editId) {
-            var idx = this.data.shortcuts.findIndex(function(s) { return s.id === parseInt(editId); });
-            if (idx !== -1) {
-                Object.assign(this.data.shortcuts[idx], {
-                    name: name, url: cleanUrl, desc: desc, group: group,
-                    priority: priority, openMode: openMode,
-                    favicon: this.getFavicon(cleanUrl),
-                    updatedAt: new Date().toISOString()
-                });
-                ui.toast('"' + name + '" updated');
-            }
-        } else {
-            this.data.shortcuts.push({
-                id: Date.now(), name: name, url: cleanUrl, desc: desc, group: group,
-                priority: priority, openMode: openMode,
-                favicon: this.getFavicon(cleanUrl),
-                added: new Date().toISOString(),
-                updatedAt: new Date().toISOString()
-            });
-            ui.toast('"' + name + '" added to ' + group, 'success');
-        }
-        this.save();
-        this.closeAddModal();
-        this.render();
-    },
+function saveApiKeys() {
+  document.querySelectorAll('#api-keys-list input[data-provider]').forEach(input => {
+    const p = input.dataset.provider;
+    const v = input.value.trim();
+    if (v) state.apiKeys[p] = v;
+    else delete state.apiKeys[p];
+  });
+  saveState();
+  autoSync();
+  showToast('API keys saved ✓', 'success');
+}
 
-    // Groups
-    openGroupsModal: function() {
-        this.renderGroupsList();
-        document.getElementById('groups-modal').style.display = 'flex';
-    },
+// ══════════════════════════════════════════════
+//  FAVICON PREVIEW
+// ══════════════════════════════════════════════
+function previewFavicon() {
+  const url = document.getElementById('sc-url').value.trim();
+  const preview = document.getElementById('sc-favicon-preview');
+  if (!url || !isValidUrl(url)) { preview.innerHTML = '🌐'; return; }
+  preview.innerHTML = `<img src="https://www.google.com/s2/favicons?domain=${encodeURIComponent(url)}&sz=64" onerror="this.parentNode.innerHTML='🌐'"/>`;
+}
 
-    closeGroupsModal: function() {
-        document.getElementById('groups-modal').style.display = 'none';
-        this.render();
-    },
+// ══════════════════════════════════════════════
+//  GIST SYNC
+// ══════════════════════════════════════════════
+function openGistModal() {
+  const errEl = document.getElementById('gist-connect-error');
+  const sucEl = document.getElementById('gist-connect-success');
+  const loadEl = document.getElementById('gist-connect-loading');
+  errEl.style.display = 'none'; sucEl.style.display = 'none'; loadEl.style.display = 'none';
+  document.getElementById('gist-token-input').value = state.gistToken || '';
+  document.getElementById('gist-id-input').value = state.gistId || '';
+  const statusEl = document.getElementById('gist-connect-current-status');
+  if (state.gistId) {
+    statusEl.style.display = 'block';
+    statusEl.innerHTML = `<strong>Currently connected:</strong> Gist ID <code style="font-family:var(--font-mono);font-size:11px;">${esc(state.gistId)}</code>`;
+  } else {
+    statusEl.style.display = 'none';
+  }
+  openModal('gist-connect-modal');
+}
 
-    renderGroupsList: function() {
-        var list = document.getElementById('groups-list');
-        var userGroups = this.data.groups.filter(function(g) { return g !== 'All Tools'; });
-        if (!userGroups.length) {
-            list.innerHTML = '<div style="text-align:center;color:var(--text-muted);font-size:12px;padding:18px;">No groups yet</div>';
-            return;
-        }
-        list.innerHTML = '';
-        for (var i = 0; i < userGroups.length; i++) {
-            (function(g) {
-                var cnt = aiGiant.data.shortcuts.filter(function(s) { return s.group === g; }).length;
-                var item = document.createElement('div');
-                item.className = 'group-manage-item';
-                item.innerHTML = '<span><i class="fa-solid fa-folder" style="color:var(--accent);margin-right:7px;"></i>' + aiGiant._esc(g) + '<span style="color:var(--text-muted);font-size:10px;margin-left:5px;">(' + cnt + ')</span></span>';
-                var delBtn = document.createElement('button');
-                delBtn.className = 'delete-group-btn';
-                delBtn.setAttribute('data-group', g);
-                delBtn.innerHTML = '<i class="fa-solid fa-trash"></i>';
-                delBtn.onclick = function() { aiGiant.deleteGroup(g); };
-                item.appendChild(delBtn);
-                list.appendChild(item);
-            })(userGroups[i]);
-        }
-    },
-
-    createGroup: function() {
-        var inp = document.getElementById('new-group-name');
-        var name = inp.value.trim();
-        if (!name) return;
-        if (this.data.groups.indexOf(name) !== -1) { ui.toast('Group already exists'); return; }
-        this.data.groups.push(name);
-        inp.value = '';
-        this.save();
-        this.renderGroupsList();
-        ui.toast('Group "' + name + '" created', 'success');
-    },
-
-    deleteGroup: function(name) {
-        var cnt = this.data.shortcuts.filter(function(s) { return s.group === name; }).length;
-        var fallback = this.data.groups.find(function(g) { return g !== 'All Tools' && g !== name; }) || 'All Tools';
-        if (cnt > 0 && !confirm('Delete group "' + name + '"? The ' + cnt + ' shortcut(s) will be moved to "' + fallback + '".')) return;
-        this.data.shortcuts.forEach(function(s) { if (s.group === name) s.group = fallback; });
-        this.data.groups = this.data.groups.filter(function(g) { return g !== name; });
-        if (this.activeGroup === name) this.activeGroup = 'All Tools';
-        this.save();
-        this.renderGroupsList();
-        ui.toast('Group "' + name + '" deleted');
-    },
-
-    // API Keys
-    PROVIDERS: [
-        { id:'openai', name:'OpenAI', icon:'fa-robot', placeholder:'sk-...' },
-        { id:'anthropic', name:'Anthropic', icon:'fa-brain', placeholder:'sk-ant-...' },
-        { id:'google', name:'Google (Gemini)', icon:'fa-brands fa-google', placeholder:'AIza...' },
-        { id:'deepseek', name:'DeepSeek', icon:'fa-microchip', placeholder:'sk-...' },
-        { id:'mistral', name:'Mistral AI', icon:'fa-wind', placeholder:'API Key...' },
-        { id:'groq', name:'Groq', icon:'fa-bolt', placeholder:'gsk_...' },
-        { id:'cohere', name:'Cohere', icon:'fa-signal', placeholder:'API Key...' },
-        { id:'perplexity', name:'Perplexity', icon:'fa-magnifying-glass', placeholder:'pplx-...' }
-    ],
-
-    openApiKeysModal: function() {
-        this.renderApiKeysList();
-        document.getElementById('api-keys-modal').style.display = 'flex';
-    },
-
-    closeApiKeysModal: function() {
-        document.getElementById('api-keys-modal').style.display = 'none';
-    },
-
-    renderApiKeysList: function() {
-        var list = document.getElementById('api-keys-list');
-        list.innerHTML = '';
-        for (var i = 0; i < this.PROVIDERS.length; i++) {
-            (function(p) {
-                var val = aiGiant.data.apiKeys[p.id] || '';
-                var isSet = val.length > 0;
-                var row = document.createElement('div');
-                row.className = 'api-key-row';
-                var iconPrefix = p.icon.indexOf('fa-brands') === 0 ? '' : 'fa-solid ';
-                row.innerHTML = '<div class="api-key-row-header"><div class="api-provider-name"><i class="' + iconPrefix + p.icon + '" style="color:var(--accent);"></i> ' + p.name + '</div><span class="api-status ' + (isSet ? 'set' : 'unset') + '">' + (isSet ? '&#10003; Set' : 'Not Set') + '</span></div>';
-                var input = document.createElement('input');
-                input.type = 'password';
-                input.className = 'form-input';
-                input.id = 'apikey-' + p.id;
-                input.placeholder = p.placeholder;
-                input.value = val;
-                input.oninput = function() {
-                    var badge = row.querySelector('.api-status');
-                    badge.className = 'api-status ' + (input.value.length ? 'set' : 'unset');
-                    badge.textContent = input.value.length ? '\u2713 Set' : 'Not Set';
-                };
-                row.appendChild(input);
-                list.appendChild(row);
-            })(this.PROVIDERS[i]);
-        }
-        var cps = this.data.customProviders || [];
-        for (var j = 0; j < cps.length; j++) {
-            (function(cp, idx) {
-                var row = document.createElement('div');
-                row.className = 'api-key-row';
-                row.innerHTML = '<div class="api-key-row-header"><div class="api-provider-name"><i class="fa-solid fa-cube" style="color:var(--accent);"></i> ' + aiGiant._esc(cp.name) + '</div></div>';
-                var removeBtn = document.createElement('button');
-                removeBtn.style.cssText = 'background:transparent;border:none;color:var(--text-muted);cursor:pointer;font-size:11px;';
-                removeBtn.textContent = 'Remove';
-                removeBtn.onclick = function() { aiGiant.removeCustomProvider(idx); };
-                row.querySelector('.api-key-row-header').appendChild(removeBtn);
-                var input = document.createElement('input');
-                input.type = 'password';
-                input.className = 'form-input';
-                input.id = 'apikey-custom-' + idx;
-                input.placeholder = 'API Key...';
-                input.value = cp.key;
-                row.appendChild(input);
-                list.appendChild(row);
-            })(cps[j], j);
-        }
-    },
-
-    saveApiKeys: function() {
-        for (var i = 0; i < this.PROVIDERS.length; i++) {
-            var p = this.PROVIDERS[i];
-            var el = document.getElementById('apikey-' + p.id);
-            if (el) this.data.apiKeys[p.id] = el.value.trim();
-        }
-        var cn = document.getElementById('custom-provider-name').value.trim();
-        var ck = document.getElementById('custom-provider-key').value.trim();
-        if (cn && ck) {
-            if (!this.data.customProviders) this.data.customProviders = [];
-            this.data.customProviders.push({ name: cn, key: ck });
-            document.getElementById('custom-provider-name').value = '';
-            document.getElementById('custom-provider-key').value = '';
-        }
-        this.save();
-        this.closeApiKeysModal();
-        ui.toast('API Keys saved', 'success');
-    },
-
-    removeCustomProvider: function(i) {
-        this.data.customProviders.splice(i, 1);
-        this.save();
-        this.renderApiKeysList();
-    },
-
-    /* ---- SESSION EXPORT / RESUME ---- */
-    getExportData: function() {
-        return {
-            _schemaVersion: SCHEMA_VERSION,
-            _exportedAt: new Date().toISOString(),
-            _tool: 'AI Giant Session',
-            shortcuts: this.data.shortcuts,
-            groups: this.data.groups,
-            apiKeys: this.data.apiKeys,
-            customProviders: this.data.customProviders || [],
-            visitHistory: this.data.visitHistory || [],
-            sync: { gistId: gistSync.gistId },
-            settings: { customEndpoint: state.settings.customEndpoint, gistId: gistSync.gistId },
-            meta: {
-                shortcutCount: this.data.shortcuts.length,
-                groupCount: this.data.groups.length,
-                historyCount: (this.data.visitHistory || []).length,
-                keysSet: Object.values(this.data.apiKeys || {}).filter(function(v) { return v; }).length,
-                gistShareUrl: gistSync.gistId ? window.location.origin + window.location.pathname + '#gist=' + gistSync.gistId : ''
-            }
-        };
-    },
-
-    exportSession: function() {
-        var payload = this.getExportData();
-        var blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-        var a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        var d = new Date();
-        var date = d.toISOString().split('T')[0];
-        var time = d.getHours().toString().padStart(2, '0') + d.getMinutes().toString().padStart(2, '0');
-        a.download = 'ai-giant-session-' + date + '-' + time + '.json';
-        a.click();
-        setTimeout(function() { URL.revokeObjectURL(a.href); }, 1000);
-        ui.toast('Session exported: ' + payload.meta.shortcutCount + ' shortcuts, ' + payload.meta.keysSet + ' keys', 'success');
-    },
-
-    importSession: function() {
-        var input = document.createElement('input');
-        input.type = 'file';
-        input.accept = '.json,application/json';
-        input.onchange = function(e) {
-            var file = e.target.files[0];
-            if (!file) return;
-            var reader = new FileReader();
-            reader.onload = function(ev) {
-                try {
-                    var parsed = JSON.parse(ev.target.result);
-                    if (!parsed.shortcuts || !Array.isArray(parsed.shortcuts)) {
-                        ui.toast('Invalid session file', 'error');
-                        return;
-                    }
-                    aiGiant._pendingImport = parsed;
-                    aiGiant.showSessionPreview(parsed);
-                } catch(err) { ui.toast('Could not parse session file', 'error'); }
-            };
-            reader.readAsText(file);
-        };
-        input.click();
-    },
-
-    showSessionPreview: function(parsed) {
-        var info = document.getElementById('session-import-info');
-        var date = parsed._exportedAt ? new Date(parsed._exportedAt).toLocaleString() : 'Unknown';
-        var m = parsed.meta || {};
-        var shortcutCount = m.shortcutCount || parsed.shortcuts.length;
-        var groupCount = m.groupCount || (parsed.groups || []).length;
-        var keysSet = m.keysSet || Object.values(parsed.apiKeys || {}).filter(function(v) { return v; }).length;
-        info.innerHTML = '<div style="background:var(--bg-app);border:1px solid var(--border);border-radius:7px;padding:13px;margin-bottom:13px;">' +
-            '<div style="font-size:11px;color:var(--text-muted);margin-bottom:9px;"><i class="fa-solid fa-file-code" style="color:var(--accent);"></i> Session Snapshot</div>' +
-            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;font-size:12px;">' +
-            '<div>&#128230; Shortcuts: <strong>' + shortcutCount + '</strong></div>' +
-            '<div>&#128193; Groups: <strong>' + groupCount + '</strong></div>' +
-            '<div>&#128273; API Keys: <strong>' + keysSet + ' set</strong></div>' +
-            '<div>&#128197; Exported: <strong style="font-size:10px;">' + date + '</strong></div>' +
-            '</div></div>' +
-            '<div style="font-size:11px;color:var(--text-muted);margin-bottom:11px;">This will <strong style="color:var(--text-main);">fully replace</strong> your current local session with the imported snapshot. Your current data will be backed up in localStorage as <code style="background:rgba(255,255,255,.05);padding:2px 4px;border-radius:3px;">aig_v6_backup</code>.</div>';
-        document.getElementById('session-import-modal').style.display = 'flex';
-    },
-
-    confirmSessionImport: function() {
-        var parsed = this._pendingImport;
-        if (!parsed) return;
-        localStorage.setItem('aig_v6_backup', localStorage.getItem('aig_v6') || '{}');
-        this.data = Object.assign({}, JSON.parse(JSON.stringify(this.DEFAULT_DATA)), parsed, { _schemaVersion: SCHEMA_VERSION });
-        if (this.data.groups.indexOf('All Tools') === -1) this.data.groups.unshift('All Tools');
-        if (!this.data.visitHistory) this.data.visitHistory = [];
-        if (!this.data.customProviders) this.data.customProviders = [];
-        if (parsed.settings) {
-            state.settings.customEndpoint = parsed.settings.customEndpoint || state.settings.customEndpoint;
-            localStorage.setItem('aig_settings', JSON.stringify(state.settings));
-        }
-        if (parsed.sync) {
-            /* Restore Gist ID; token must be re-entered for security */
-            if (parsed.sync.gistId) {
-                gistSync.gistId = parsed.sync.gistId;
-                gistSync._saveCredentials();
-                gistSync.updateUI();
-            }
-            /* Legacy: support old exports that included the token */
-            if (parsed.sync.gistToken && parsed.sync.gistId) {
-                gistSync.token = parsed.sync.gistToken;
-                gistSync._saveCredentials();
-                gistSync.updateUI();
-            }
-        }
-        this.save();
-        document.getElementById('session-import-modal').style.display = 'none';
-        this.activeGroup = 'All Tools';
-        this.render();
-        ui.toast('Session resumed successfully! Previous session backed up.', 'success');
-    },
-
-    mergeImportData: function(parsed, silent) {
-        if (!parsed || !parsed.shortcuts) return { added: 0, updated: 0 };
-        var self = this;
-        (parsed.groups || []).forEach(function(g) { if (self.data.groups.indexOf(g) === -1) self.data.groups.push(g); });
-        var existingUrls = new Set(this.data.shortcuts.map(function(s) { return s.url; }));
-        var added = 0;
-        var updated = 0;
-        (parsed.shortcuts || []).forEach(function(s) {
-            if (!existingUrls.has(s.url)) {
-                self.data.shortcuts.push(Object.assign({}, s, { id: Date.now() + Math.floor(Math.random() * 1000) }));
-                existingUrls.add(s.url);
-                added++;
-            } else {
-                /* Update existing shortcut if Gist version is newer */
-                var idx = self.data.shortcuts.findIndex(function(local) { return local.url === s.url; });
-                if (idx !== -1 && s.updatedAt && (!self.data.shortcuts[idx].updatedAt || s.updatedAt > self.data.shortcuts[idx].updatedAt)) {
-                    self.data.shortcuts[idx] = Object.assign({}, self.data.shortcuts[idx], s, { id: self.data.shortcuts[idx].id });
-                    updated++;
-                }
-            }
-        });
-        Object.keys(parsed.apiKeys || {}).forEach(function(k) {
-            var v = parsed.apiKeys[k];
-            if (v && !self.data.apiKeys[k]) self.data.apiKeys[k] = v;
-        });
-        var incomingHist = (parsed.visitHistory || []).filter(function(v) {
-            return !self.data.visitHistory.find(function(h) { return h.url === v.url; });
-        });
-        this.data.visitHistory = incomingHist.concat(this.data.visitHistory).slice(0, 200);
-        var existingCustom = new Set((this.data.customProviders || []).map(function(c) { return c.name; }));
-        (parsed.customProviders || []).forEach(function(c) {
-            if (!existingCustom.has(c.name)) self.data.customProviders.push(c);
-        });
-        this.save();
-        this.render();
-        if (!silent) ui.toast('Merged: ' + added + ' new + ' + updated + ' updated shortcuts', 'success');
-        return { added: added, updated: updated };
-    },
-
-    /* Replace all local data with Gist data (for new device restore) */
-    replaceData: function(parsed) {
-        if (!parsed || !parsed.shortcuts) return;
-        localStorage.setItem('aig_v6_backup', localStorage.getItem('aig_v6') || '{}');
-        this.data = Object.assign({}, JSON.parse(JSON.stringify(this.DEFAULT_DATA)), parsed, { _schemaVersion: SCHEMA_VERSION });
-        if (this.data.groups.indexOf('All Tools') === -1) this.data.groups.unshift('All Tools');
-        if (!this.data.visitHistory) this.data.visitHistory = [];
-        if (!this.data.customProviders) this.data.customProviders = [];
-        /* Restore Gist connection info from imported data */
-        if (parsed.sync && parsed.sync.gistId && !gistSync.gistId) {
-            gistSync.gistId = parsed.sync.gistId;
-        }
-        if (parsed.settings && parsed.settings.customEndpoint) {
-            state.settings.customEndpoint = parsed.settings.customEndpoint;
-        }
-        this.save();
-        this.render();
+async function connectGist() {
+  const token = document.getElementById('gist-token-input').value.trim();
+  const gistId = document.getElementById('gist-id-input').value.trim();
+  const errEl = document.getElementById('gist-connect-error');
+  const sucEl = document.getElementById('gist-connect-success');
+  const loadEl = document.getElementById('gist-connect-loading');
+  errEl.style.display = 'none'; sucEl.style.display = 'none';
+  if (!token) { errEl.textContent = 'Token is required.'; errEl.style.display = 'block'; return; }
+  loadEl.style.display = 'block';
+  try {
+    let id = gistId;
+    if (!id) {
+      // Create new gist
+      id = await createGist(token);
+      sucEl.textContent = `New Gist created! ID: ${id}`;
+    } else {
+      const data = await fetchGist(token, id);
+      applyGistData(data, token, id);
+      sucEl.textContent = 'Connected and synced successfully!';
     }
-};
+    state.gistToken = token;
+    state.gistId = id;
+    loadEl.style.display = 'none';
+    sucEl.style.display = 'block';
+    saveState();
+    await pushToGist();
+    updateSyncStatus();
+    renderAll();
+    showToast('Gist connected ✓', 'success');
+  } catch(e) {
+    loadEl.style.display = 'none';
+    errEl.textContent = 'Error: ' + e.message;
+    errEl.style.display = 'block';
+  }
+}
 
-/* ===== UI & APP ===== */
-var ui = {
-    showSettings: function() {
-        document.getElementById('settings-modal').style.display = 'flex';
-        document.getElementById('custom-endpoint').value = state.settings.customEndpoint;
-        /* Privacy lock state */
-        var privacyBadge = document.getElementById('privacy-status-badge');
-        var disableLockBtn = document.getElementById('disable-lock-btn');
-        if (privacyLock.isEnabled()) {
-            if (privacyBadge) { privacyBadge.className = 'privacy-indicator on'; privacyBadge.innerHTML = '<i class="fa-solid fa-lock"></i> Enabled'; }
-            if (disableLockBtn) disableLockBtn.style.display = 'inline-flex';
-        } else {
-            if (privacyBadge) { privacyBadge.className = 'privacy-indicator off'; privacyBadge.innerHTML = '<i class="fa-solid fa-lock-open"></i> Disabled'; }
-            if (disableLockBtn) disableLockBtn.style.display = 'none';
-        }
-        /* Show Gist connection status */
-        var statusDiv = document.getElementById('gist-settings-status');
-        var actionsDiv = document.getElementById('gist-settings-actions');
-        if (statusDiv) {
-            if (gistSync.token && gistSync.gistId) {
-                var timeStr = gistSync.lastSyncAt ? new Date(gistSync.lastSyncAt).toLocaleString() : 'Never';
-                statusDiv.innerHTML = '<span class="privacy-indicator on"><i class="fa-solid fa-check"></i> Connected</span> <span style="font-size:10px;color:var(--text-muted);">Gist: ' + gistSync.gistId + ' · Last sync: ' + timeStr + '</span>';
-                if (actionsDiv) actionsDiv.classList.remove('hidden');
-            } else {
-                statusDiv.innerHTML = '<span class="privacy-indicator off"><i class="fa-solid fa-lock-open"></i> Not Connected</span>';
-                if (actionsDiv) actionsDiv.classList.add('hidden');
-            }
-        }
-    },
-    hideSettings: function() {
-        document.getElementById('settings-modal').style.display = 'none';
-    },
-    hideModal: function(id) {
-        var el = document.getElementById(id);
-        if (el) el.style.display = 'none';
-    },
-    toast: function(msg, type) {
-        var d = document.createElement('div');
-        d.className = 'toast' + (type ? ' ' + type : '');
-        d.innerText = msg;
-        document.body.appendChild(d);
-        setTimeout(function() { d.remove(); }, 3500);
+function disconnectGist() {
+  if (!confirm('Disconnect Gist? Local data will be kept.')) return;
+  state.gistToken = '';
+  state.gistId = '';
+  saveState();
+  updateSyncStatus();
+  closeModal('gist-connect-modal');
+  showToast('Gist disconnected');
+}
+
+async function fetchGist(token, id) {
+  const res = await fetch(`https://api.github.com/gists/${id}`, {
+    headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github.v3+json' }
+  });
+  if (!res.ok) throw new Error(`GitHub API error: ${res.status} ${res.statusText}`);
+  const gist = await res.json();
+  const file = gist.files['aig-data.json'];
+  if (!file) return {};
+  return JSON.parse(file.content);
+}
+
+async function createGist(token) {
+  const res = await fetch('https://api.github.com/gists', {
+    method: 'POST',
+    headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      description: 'AI Giant — SubarnaZen Nexus Data',
+      public: false,
+      files: { 'aig-data.json': { content: JSON.stringify(gistPayload()) } }
+    })
+  });
+  if (!res.ok) throw new Error(`Could not create Gist: ${res.status} ${res.statusText}`);
+  const gist = await res.json();
+  return gist.id;
+}
+
+async function pushToGist() {
+  if (!state.gistToken || !state.gistId) return;
+  const res = await fetch(`https://api.github.com/gists/${state.gistId}`, {
+    method: 'PATCH',
+    headers: { Authorization: `token ${state.gistToken}`, Accept: 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ files: { 'aig-data.json': { content: JSON.stringify(gistPayload()) } } })
+  });
+  if (!res.ok) throw new Error(`Sync failed: ${res.status}`);
+}
+
+function gistPayload() {
+  return { shortcuts: state.shortcuts, groups: state.groups, apiKeys: state.apiKeys, history: state.history };
+}
+
+function applyGistData(data, token, id) {
+  if (data.shortcuts) state.shortcuts = data.shortcuts;
+  if (data.groups) state.groups = data.groups;
+  if (data.apiKeys) state.apiKeys = data.apiKeys;
+  if (data.history) state.history = data.history;
+  state.gistToken = token;
+  state.gistId = id;
+}
+
+async function doSync() {
+  if (!state.gistToken || !state.gistId) { showToast('No Gist connected', 'error'); return; }
+  const btn = document.getElementById('sync-now-btn');
+  btn.textContent = '🔄 Syncing…';
+  try {
+    await pushToGist();
+    showToast('Synced to Gist ✓', 'success');
+  } catch(e) {
+    showToast('Sync failed: ' + e.message, 'error');
+  }
+  btn.innerHTML = '🔄 <span class="btn-text">Sync Now</span>';
+}
+
+let autoSyncTimer;
+function autoSync() {
+  if (!state.gistToken || !state.gistId) return;
+  clearTimeout(autoSyncTimer);
+  autoSyncTimer = setTimeout(() => pushToGist().catch(()=>{}), 3000);
+}
+
+function updateSyncStatus() {
+  const el = document.getElementById('sync-status');
+  if (state.gistId) {
+    el.textContent = `Gist: ${state.gistId.substring(0,8)}…`;
+    el.className = 'sync-status connected';
+    document.getElementById('settings-copy-link').style.display = 'inline-flex';
+    document.getElementById('settings-disconnect-btn').style.display = 'inline-flex';
+    document.getElementById('gist-settings-status').textContent = `Connected: ${state.gistId}`;
+  } else {
+    el.textContent = 'Gist: Not Connected';
+    el.className = 'sync-status';
+    document.getElementById('settings-copy-link').style.display = 'none';
+    document.getElementById('settings-disconnect-btn').style.display = 'none';
+    document.getElementById('gist-settings-status').textContent = 'Not connected';
+  }
+}
+
+function shareLink() {
+  if (!state.gistId) { showToast('Connect a Gist first', 'error'); return; }
+  const url = `${location.origin}${location.pathname}?gist=${state.gistId}`;
+  navigator.clipboard.writeText(url).then(() => showToast('Share link copied ✓', 'success')).catch(() => {
+    prompt('Copy this share link:', url);
+  });
+}
+
+// ══════════════════════════════════════════════
+//  SESSION EXPORT / IMPORT
+// ══════════════════════════════════════════════
+function exportSession() {
+  const payload = {
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    shortcuts: state.shortcuts,
+    groups: state.groups,
+    apiKeys: state.apiKeys,
+    history: state.history,
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `ai-giant-session-${Date.now()}.json`;
+  a.click();
+  showToast('Session exported ✓', 'success');
+}
+
+document.getElementById('session-file-input').addEventListener('change', function() {
+  const file = this.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      const preview = document.getElementById('session-import-preview');
+      preview.style.display = 'block';
+      preview.innerHTML = `Found <strong>${(data.shortcuts||[]).length} shortcuts</strong> and <strong>${(data.groups||[]).length} groups</strong> in this session file.`;
+    } catch {
+      showToast('Invalid session file', 'error');
     }
-};
-
-var app = {
-    init: function() {
-        var savedTheme = localStorage.getItem('aig_theme');
-        if (savedTheme) document.body.setAttribute('data-theme', savedTheme);
-        var savedSettings = localStorage.getItem('aig_settings');
-        if (savedSettings) {
-            try { state.settings = Object.assign({}, state.settings, JSON.parse(savedSettings)); } catch(e) {}
-        }
-        /* Check for Gist ID in URL hash (for cross-device restore) */
-        var hash = window.location.hash;
-        if (hash && hash.startsWith('#gist=')) {
-            var gistIdFromUrl = gistSync._extractGistId(hash.substring(6));
-            if (gistIdFromUrl) {
-                /* Pre-fill both welcome screen and connect modal */
-                var welcId = document.getElementById('welcome-gist-id');
-                var connId = document.getElementById('connect-gist-id');
-                if (welcId) welcId.value = gistIdFromUrl;
-                if (connId) connId.value = gistIdFromUrl;
-                /* Clear the hash so it doesn't re-trigger on refresh */
-                history.replaceState(null, '', window.location.pathname);
-            }
-        }
-        /* Show welcome screen for new devices */
-        if (aiGiant._isNewDevice()) {
-            document.getElementById('welcome-screen').classList.remove('hidden');
-        } else {
-            aiGiant.init();
-        }
-        privacyLock.init();
-    },
-
-    startFresh: function() {
-        document.getElementById('welcome-screen').classList.add('hidden');
-        aiGiant.init();
-    },
-
-    restoreFromWelcome: async function() {
-        var token = document.getElementById('welcome-gist-token').value.trim();
-        var gistIdRaw = document.getElementById('welcome-gist-id').value.trim();
-        var gistId = gistSync._extractGistId(gistIdRaw);
-        var errEl = document.getElementById('welcome-restore-error');
-        var loadingEl = document.getElementById('welcome-restore-loading');
-        var restoreBtn = document.getElementById('welcome-restore-btn');
-
-        if (!token) {
-            if (errEl) { errEl.textContent = 'Please enter your GitHub Personal Access Token.'; errEl.style.display = 'block'; }
-            return;
-        }
-        if (!gistId) {
-            if (errEl) { errEl.textContent = 'Please enter your Gist ID (or paste the Gist URL from your other device).'; errEl.style.display = 'block'; }
-            return;
-        }
-
-        /* Update the field with cleaned Gist ID */
-        if (gistId !== gistIdRaw && gistId) {
-            document.getElementById('welcome-gist-id').value = gistId;
-        }
-
-        /* Show loading state */
-        if (errEl) errEl.style.display = 'none';
-        if (loadingEl) loadingEl.style.display = 'block';
-        if (restoreBtn) { restoreBtn.disabled = true; restoreBtn.innerHTML = '<span class="sync-spinner"></span> Connecting...'; }
-
-        try {
-            /* Step 1: Validate credentials by reading the Gist */
-            var res = await fetch('https://api.github.com/gists/' + gistId, {
-                headers: Object.assign({}, gistSync._authHeader(token), { 'Accept': 'application/vnd.github.v3+json' })
-            });
-            if (!res.ok) {
-                var errData = {};
-                try { errData = await res.json(); } catch(e2) {}
-                if (res.status === 401) throw new Error('Invalid GitHub token. Make sure it has the "gist" scope enabled.');
-                if (res.status === 404) throw new Error('Gist not found. Check the Gist ID — make sure you copied it correctly.');
-                throw new Error(errData.message || 'Could not access Gist (HTTP ' + res.status + ')');
-            }
-
-            /* Step 2: Parse the Gist data */
-            var gistData = await res.json();
-            var file = gistData.files && gistData.files['ai-giant-data.json'];
-            if (!file || !file.content) throw new Error('This Gist exists but has no AI Giant data. Did you use the correct Gist ID?');
-            var parsed = JSON.parse(file.content);
-            if (!parsed.shortcuts || !Array.isArray(parsed.shortcuts)) throw new Error('Invalid data format in Gist');
-
-            /* Step 3: Credentials are valid — save them */
-            gistSync.token = token;
-            gistSync.gistId = gistId;
-            gistSync.lastSyncAt = new Date().toISOString();
-            gistSync._saveCredentials();
-
-            /* Step 4: Hide welcome screen and load data */
-            document.getElementById('welcome-screen').classList.add('hidden');
-            /* Suppress auto-sync during data replacement to prevent pushing before data is ready */
-            gistSync._suppressAutoSync = true;
-            aiGiant.data = JSON.parse(JSON.stringify(aiGiant.DEFAULT_DATA));
-            aiGiant.render();
-            gistSync.updateUI();
-
-            /* Step 5: Replace local data with Gist data */
-            aiGiant.replaceData(parsed);
-            gistSync._suppressAutoSync = false;
-
-            /* Step 6: Push the restored data to Gist to ensure it's up to date */
-            await gistSync._saveToGist();
-            gistSync.lastSyncAt = new Date().toISOString();
-            gistSync._saveCredentials();
-            gistSync.updateUI();
-
-            ui.toast('Data restored! ' + parsed.shortcuts.length + ' shortcuts loaded. Welcome back!', 'success');
-
-        } catch (e) {
-            /* If welcome screen is already hidden, show toast instead of inline error */
-            var welcomeEl = document.getElementById('welcome-screen');
-            if (welcomeEl && welcomeEl.classList.contains('hidden')) {
-                ui.toast('Sync error: ' + e.message, 'error');
-            } else if (errEl) {
-                errEl.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> ' + gistSync._escHtml(e.message);
-                errEl.style.display = 'block';
-            }
-        } finally {
-            if (loadingEl) loadingEl.style.display = 'none';
-            if (restoreBtn) { restoreBtn.disabled = false; restoreBtn.innerHTML = '<i class="fa-solid fa-cloud-arrow-down"></i> Restore My Data'; }
-        }
-    },
-
-    saveSettings: function() {
-        state.settings.customEndpoint = document.getElementById('custom-endpoint').value.trim();
-        localStorage.setItem('aig_settings', JSON.stringify(state.settings));
-        ui.hideSettings();
-        ui.toast('Configuration saved', 'success');
-    }
-};
-
-/* ===== BOOT & EVENTS ===== */
-window.onload = function() { app.init(); };
-
-// Click outside modal to close
-var modalIds = ['add-shortcut-modal', 'groups-modal', 'api-keys-modal', 'session-import-modal', 'settings-modal', 'gist-connect-modal'];
-modalIds.forEach(function(id) {
-    var el = document.getElementById(id);
-    if (el) {
-        el.addEventListener('click', function(e) {
-            if (e.target === this) {
-                this.style.display = 'none';
-                if (id === 'groups-modal') aiGiant.render();
-            }
-        });
-    }
+  };
+  reader.readAsText(file);
 });
 
-// Escape key closes modals
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-        aiGiant.closeAddModal();
-        aiGiant.closeGroupsModal();
-        aiGiant.closeApiKeysModal();
-        ui.hideModal('session-import-modal');
-        ui.hideModal('settings-modal');
-        ui.hideModal('gist-connect-modal');
-        var hbox = document.getElementById('history-results');
-        if (hbox) hbox.style.display = 'none';
+function doImportSession() {
+  const file = document.getElementById('session-file-input').files[0];
+  if (!file) { showToast('Select a file first', 'error'); return; }
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (data.shortcuts) state.shortcuts = data.shortcuts;
+      if (data.groups) state.groups = data.groups;
+      if (data.apiKeys) state.apiKeys = data.apiKeys;
+      if (data.history) state.history = data.history;
+      state.initialized = true;
+      saveState();
+      closeModal('session-import-modal');
+      bootApp();
+      showToast('Session restored ✓', 'success');
+    } catch {
+      showToast('Failed to parse session file', 'error');
     }
+  };
+  reader.readAsText(file);
+}
+
+// ══════════════════════════════════════════════
+//  SETTINGS
+// ══════════════════════════════════════════════
+function openSettings() {
+  document.getElementById('settings-endpoint').value = state.endpoint || '';
+  const badge = document.getElementById('privacy-status-badge');
+  if (state.lockEnabled) { badge.className = 'privacy-indicator on'; badge.textContent = 'Enabled'; }
+  else { badge.className = 'privacy-indicator off'; badge.textContent = 'Disabled'; }
+  updateSyncStatus();
+  openModal('settings-modal');
+}
+
+function saveSettings() {
+  state.endpoint = document.getElementById('settings-endpoint').value.trim();
+  saveState();
+  closeModal('settings-modal');
+  showToast('Settings saved ✓', 'success');
+}
+
+// ══════════════════════════════════════════════
+//  MODAL UTILS
+// ══════════════════════════════════════════════
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+// Close on overlay click
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) overlay.classList.remove('open');
+  });
 });
 
-// Click outside history results to close
-document.addEventListener('click', function(e) {
-    var hbox = document.getElementById('history-results');
-    var search = document.getElementById('aig-history-search');
-    if (hbox && !hbox.contains(e.target) && e.target !== search) {
-        hbox.style.display = 'none';
-    }
+// ══════════════════════════════════════════════
+//  TOAST
+// ══════════════════════════════════════════════
+let toastTimer;
+function showToast(msg, type='') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show' + (type ? ' '+type : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.className = ''; }, 2400);
+}
+
+// ══════════════════════════════════════════════
+//  UTILS
+// ══════════════════════════════════════════════
+function uid() { return Math.random().toString(36).slice(2,10) + Date.now().toString(36); }
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+function isValidUrl(s) { try { new URL(s); return true; } catch { return false; } }
+
+// ══════════════════════════════════════════════
+//  KEYBOARD SHORTCUTS
+// ══════════════════════════════════════════════
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open'));
+  }
+  if ((e.ctrlKey||e.metaKey) && e.key === 'k') {
+    e.preventDefault();
+    document.getElementById('search-input').focus();
+  }
+  if ((e.ctrlKey||e.metaKey) && e.key === 'n') {
+    e.preventDefault();
+    openAddModal(null);
+  }
 });
+
+// ══════════════════════════════════════════════
+//  START
+// ══════════════════════════════════════════════
+init();
 </script>
 </body>
 </html>
