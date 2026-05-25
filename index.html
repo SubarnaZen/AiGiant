@@ -18,7 +18,8 @@
             --border: #dde3ef; --text-main: #1a2035; --text-muted: #64748b; --accent-glow: rgba(59,130,246,0.1);
             --scrollbar-track: #f1f4f9; --scrollbar-thumb: #c4c9d4;
         }
-        * { box-sizing: border-box; outline: none; }
+        * { box-sizing: border-box; }
+        :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
         body { margin:0; padding:0; background:var(--bg-app); color:var(--text-main); font-family:var(--font-ui); height:100vh; overflow:hidden; display:flex; flex-direction:column; }
 
         /* Custom Scrollbar */
@@ -96,10 +97,30 @@
         .group-section-title { font-size:10px; text-transform:uppercase; letter-spacing:1.2px; color:var(--text-muted); font-weight:700; margin:0 0 10px 0; padding-bottom:7px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:7px; }
 
         /* Empty State */
-        .aig-empty { text-align:center; padding:70px 20px; color:var(--text-muted); }
-        .aig-empty i { font-size:48px; opacity:.12; margin-bottom:16px; display:block; }
+        .aig-empty { text-align:center; padding:50px 20px; color:var(--text-muted); }
+        .aig-empty i.empty-icon { font-size:48px; opacity:.12; margin-bottom:16px; display:block; }
         .aig-empty h3 { font-size:16px; margin:0 0 8px 0; color:var(--text-main); }
         .aig-empty p { font-size:12px; }
+        .restore-options { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-top:20px; }
+        .restore-card { background:var(--bg-panel); border:1px solid var(--border); border-radius:10px; padding:20px; width:200px; text-align:center; cursor:pointer; transition:.2s; }
+        .restore-card:hover { border-color:var(--accent); transform:translateY(-2px); box-shadow:0 8px 22px rgba(59,130,246,.13); }
+        .restore-card i { font-size:28px; color:var(--accent); margin-bottom:10px; display:block; }
+        .restore-card .rc-title { font-size:13px; font-weight:700; color:var(--text-main); margin-bottom:4px; }
+        .restore-card .rc-desc { font-size:11px; color:var(--text-muted); line-height:1.4; }
+
+        /* Welcome Screen */
+        .welcome-screen { position:fixed; top:0; left:0; width:100%; height:100%; background:var(--bg-app); z-index:8888; display:flex; align-items:center; justify-content:center; }
+        .welcome-screen.hidden { display:none !important; }
+        .welcome-card { background:var(--bg-panel); border:1px solid var(--border); border-radius:12px; padding:36px; width:480px; max-width:92vw; text-align:center; box-shadow:0 16px 40px rgba(0,0,0,.5); }
+        .welcome-card .wc-icon { font-size:48px; color:var(--accent); margin-bottom:14px; }
+        .welcome-card h2 { font-size:20px; margin:0 0 6px 0; }
+        .welcome-card .wc-sub { font-size:12px; color:var(--text-muted); margin-bottom:24px; }
+        .welcome-card .form-input { margin-bottom:12px; }
+        .welcome-actions { display:flex; flex-direction:column; gap:10px; margin-top:16px; }
+        .welcome-or { font-size:11px; color:var(--text-muted); margin:12px 0; position:relative; }
+        .welcome-or::before, .welcome-or::after { content:''; position:absolute; top:50%; width:30%; height:1px; background:var(--border); }
+        .welcome-or::before { left:5%; }
+        .welcome-or::after { right:5%; }
 
         /* Modals */
         .modal-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,.65); display:none; align-items:center; justify-content:center; z-index:1000; backdrop-filter:blur(6px); }
@@ -171,6 +192,31 @@
     </style>
 </head>
 <body>
+
+<!-- WELCOME / RESTORE SCREEN (for new devices) -->
+<div id="welcome-screen" class="welcome-screen hidden">
+    <div class="welcome-card">
+        <div class="wc-icon"><i class="fa-solid fa-rocket"></i></div>
+        <h2>Welcome to AI Giant</h2>
+        <div class="wc-sub">Your AI bookmark hub — access from any device with cloud sync</div>
+        <div id="welcome-gist-section">
+            <div class="form-group">
+                <label class="form-label"><i class="fa-brands fa-github" style="color:var(--accent);"></i> GitHub Personal Access Token</label>
+                <input type="password" class="form-input" id="welcome-gist-token" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Gist ID <span style="font-weight:400;color:var(--text-muted);">(from your other device)</span></label>
+                <input type="text" class="form-input" id="welcome-gist-id" placeholder="Paste your Gist ID here...">
+            </div>
+            <button class="btn-primary" style="width:100%;" onclick="app.restoreFromWelcome()"><i class="fa-solid fa-cloud-arrow-down"></i> Restore My Data</button>
+        </div>
+        <div class="welcome-or">or</div>
+        <div class="welcome-actions">
+            <button class="btn-primary" style="width:100%;background:transparent;border:1px solid var(--border);color:var(--text-main);" onclick="app.startFresh()"><i class="fa-solid fa-plus"></i> Start Fresh (Empty Dashboard)</button>
+            <button class="btn-primary" style="width:100%;background:transparent;border:1px solid var(--border);color:var(--text-main);" onclick="aiGiant.importSession()"><i class="fa-solid fa-file-import"></i> Import Session File</button>
+        </div>
+    </div>
+</div>
 
 <!-- PRIVACY LOCK SCREEN -->
 <div id="lock-screen" class="lock-screen hidden">
@@ -254,8 +300,8 @@
             <div class="form-group">
                 <label class="form-label">Open Mode</label>
                 <select class="form-input" id="sc-open-mode">
-                    <option value="same">Same window (new tab)</option>
-                    <option value="new">New browser window</option>
+                    <option value="same">Open in current tab</option>
+                    <option value="new">Open in new tab</option>
                 </select>
             </div>
             <div class="form-group" style="display:flex;align-items:center;gap:9px;">
@@ -493,7 +539,7 @@ function toggleTheme() {
     var isLight = document.body.getAttribute('data-theme') === 'light';
     if (isLight) {
         document.body.removeAttribute('data-theme');
-        localStorage.setItem('aig_theme', '');
+        localStorage.removeItem('aig_theme');
     } else {
         document.body.setAttribute('data-theme', 'light');
         localStorage.setItem('aig_theme', 'light');
@@ -546,6 +592,12 @@ var gistSync = {
             this.updateUI();
             ui.toast('GitHub Gist connected', 'success');
             await this.syncNow();
+            /* Update settings fields with connection info */
+            document.getElementById('gist-token').value = this.token;
+            document.getElementById('gist-id').value = this.gistId;
+            state.settings.gistToken = this.token;
+            state.settings.gistId = this.gistId;
+            localStorage.setItem('aig_settings', JSON.stringify(state.settings));
         } catch (e) { ui.toast(e.message, 'error'); }
     },
 
@@ -639,6 +691,12 @@ var aiGiant = {
     dragSrcId: null,
     _pendingImport: null,
 
+    _isNewDevice: function() {
+        var hasData = !!localStorage.getItem('aig_v6');
+        var hasGist = !!localStorage.getItem('aig_gist');
+        return !hasData && !hasGist;
+    },
+
     init: function() {
         var saved = localStorage.getItem('aig_v6');
         if (saved) {
@@ -668,6 +726,10 @@ var aiGiant = {
         if (!this.data.customProviders) this.data.customProviders = [];
         this.render();
         gistSync.init();
+        /* Auto-pull from Gist if connected and local data is empty */
+        if (gistSync.token && gistSync.gistId && !this.data.shortcuts.length) {
+            gistSync.loadFromGist();
+        }
     },
 
     save: function() {
@@ -759,9 +821,9 @@ var aiGiant = {
     openSite: function(s) {
         var safeUrl = s.url.startsWith('http') ? s.url : 'https://' + s.url;
         if (s.openMode === 'new') {
-            window.open(safeUrl, '_blank', 'noopener');
-        } else {
             window.open(safeUrl, '_blank', 'noopener,noreferrer');
+        } else {
+            window.location.href = safeUrl;
         }
         this.recordVisit(s);
     },
@@ -812,9 +874,19 @@ var aiGiant = {
         if (!grid) return;
         var filtered = this.getFilteredShortcuts();
         if (!filtered.length) {
-            var emptyMsg = !this.data.shortcuts.length ? 'Your AI Hub is empty' : 'No results';
-            var emptyHint = !this.data.shortcuts.length ? 'Click <strong>Add</strong> to add your first shortcut.' : 'Try a different search or group filter.';
-            grid.innerHTML = '<div class="aig-empty"><i class="fa-solid fa-rocket"></i><h3>' + emptyMsg + '</h3><p>' + emptyHint + '</p></div>';
+            if (!this.data.shortcuts.length) {
+                grid.innerHTML = '<div class="aig-empty">' +
+                    '<i class="fa-solid fa-rocket empty-icon"></i>' +
+                    '<h3>Your AI Hub is empty</h3>' +
+                    '<p>Get started by adding shortcuts or restoring from the cloud</p>' +
+                    '<div class="restore-options">' +
+                    '<div class="restore-card" onclick="aiGiant.openAddModal()"><i class="fa-solid fa-plus"></i><div class="rc-title">Add Shortcut</div><div class="rc-desc">Manually add your first AI tool</div></div>' +
+                    '<div class="restore-card" onclick="gistSync.connect()"><i class="fa-brands fa-github"></i><div class="rc-title">Sync from Gist</div><div class="rc-desc">Restore from your GitHub Gist backup</div></div>' +
+                    '<div class="restore-card" onclick="aiGiant.importSession()"><i class="fa-solid fa-file-import"></i><div class="rc-title">Import File</div><div class="rc-desc">Load from an exported session file</div></div>' +
+                    '</div></div>';
+            } else {
+                grid.innerHTML = '<div class="aig-empty"><i class="fa-solid fa-magnifying-glass empty-icon"></i><h3>No results</h3><p>Try a different search or group filter.</p></div>';
+            }
             return;
         }
         if (this.activeGroup === 'All Tools' && !this.searchQuery) {
@@ -1144,8 +1216,9 @@ var aiGiant = {
 
     deleteGroup: function(name) {
         var cnt = this.data.shortcuts.filter(function(s) { return s.group === name; }).length;
-        if (cnt > 0 && !confirm('Delete group "' + name + '"? The ' + cnt + ' shortcut(s) will be moved to Tech.')) return;
-        this.data.shortcuts.forEach(function(s) { if (s.group === name) s.group = 'Tech'; });
+        var fallback = this.data.groups.find(function(g) { return g !== 'All Tools' && g !== name; }) || 'All Tools';
+        if (cnt > 0 && !confirm('Delete group "' + name + '"? The ' + cnt + ' shortcut(s) will be moved to "' + fallback + '".')) return;
+        this.data.shortcuts.forEach(function(s) { if (s.group === name) s.group = fallback; });
         this.data.groups = this.data.groups.filter(function(g) { return g !== name; });
         if (this.activeGroup === name) this.activeGroup = 'All Tools';
         this.save();
@@ -1157,11 +1230,11 @@ var aiGiant = {
     PROVIDERS: [
         { id:'openai', name:'OpenAI', icon:'fa-robot', placeholder:'sk-...' },
         { id:'anthropic', name:'Anthropic', icon:'fa-brain', placeholder:'sk-ant-...' },
-        { id:'google', name:'Google (Gemini)', icon:'fa-google', placeholder:'AIza...' },
+        { id:'google', name:'Google (Gemini)', icon:'fa-brands fa-google', placeholder:'AIza...' },
         { id:'deepseek', name:'DeepSeek', icon:'fa-microchip', placeholder:'sk-...' },
         { id:'mistral', name:'Mistral AI', icon:'fa-wind', placeholder:'API Key...' },
         { id:'groq', name:'Groq', icon:'fa-bolt', placeholder:'gsk_...' },
-        { id:'cohere', name:'Cohere', icon:'fa-wave-square', placeholder:'API Key...' },
+        { id:'cohere', name:'Cohere', icon:'fa-signal', placeholder:'API Key...' },
         { id:'perplexity', name:'Perplexity', icon:'fa-magnifying-glass', placeholder:'pplx-...' }
     ],
 
@@ -1183,7 +1256,8 @@ var aiGiant = {
                 var isSet = val.length > 0;
                 var row = document.createElement('div');
                 row.className = 'api-key-row';
-                row.innerHTML = '<div class="api-key-row-header"><div class="api-provider-name"><i class="fa-solid ' + p.icon + '" style="color:var(--accent);"></i> ' + p.name + '</div><span class="api-status ' + (isSet ? 'set' : 'unset') + '">' + (isSet ? '&#10003; Set' : 'Not Set') + '</span></div>';
+                var iconPrefix = p.icon.indexOf('fa-brands') === 0 ? '' : 'fa-solid ';
+                row.innerHTML = '<div class="api-key-row-header"><div class="api-provider-name"><i class="' + iconPrefix + p.icon + '" style="color:var(--accent);"></i> ' + p.name + '</div><span class="api-status ' + (isSet ? 'set' : 'unset') + '">' + (isSet ? '&#10003; Set' : 'Not Set') + '</span></div>';
                 var input = document.createElement('input');
                 input.type = 'password';
                 input.className = 'form-input';
@@ -1258,13 +1332,14 @@ var aiGiant = {
             apiKeys: this.data.apiKeys,
             customProviders: this.data.customProviders || [],
             visitHistory: this.data.visitHistory || [],
-            sync: { gistToken: gistSync.token, gistId: gistSync.gistId },
-            settings: { customEndpoint: state.settings.customEndpoint },
+            sync: { gistId: gistSync.gistId },
+            settings: { customEndpoint: state.settings.customEndpoint, gistId: gistSync.gistId },
             meta: {
                 shortcutCount: this.data.shortcuts.length,
                 groupCount: this.data.groups.length,
                 historyCount: (this.data.visitHistory || []).length,
-                keysSet: Object.values(this.data.apiKeys || {}).filter(function(v) { return v; }).length
+                keysSet: Object.values(this.data.apiKeys || {}).filter(function(v) { return v; }).length,
+                gistShareUrl: gistSync.gistId ? window.location.origin + window.location.pathname + '#gist=' + gistSync.gistId : ''
             }
         };
     },
@@ -1279,7 +1354,7 @@ var aiGiant = {
         var time = d.getHours().toString().padStart(2, '0') + d.getMinutes().toString().padStart(2, '0');
         a.download = 'ai-giant-session-' + date + '-' + time + '.json';
         a.click();
-        URL.revokeObjectURL(a.href);
+        setTimeout(function() { URL.revokeObjectURL(a.href); }, 1000);
         ui.toast('Session exported: ' + payload.meta.shortcutCount + ' shortcuts, ' + payload.meta.keysSet + ' keys', 'success');
     },
 
@@ -1339,13 +1414,23 @@ var aiGiant = {
             localStorage.setItem('aig_settings', JSON.stringify(state.settings));
         }
         if (parsed.sync) {
-            if (parsed.sync.gistToken && parsed.sync.gistId) {
-                gistSync.token = parsed.sync.gistToken;
+            /* Restore Gist ID; token must be re-entered for security */
+            if (parsed.sync.gistId) {
                 gistSync.gistId = parsed.sync.gistId;
                 gistSync.saveState();
                 gistSync.updateUI();
-                document.getElementById('gist-token').value = parsed.sync.gistToken;
                 document.getElementById('gist-id').value = parsed.sync.gistId;
+                state.settings.gistId = parsed.sync.gistId;
+                localStorage.setItem('aig_settings', JSON.stringify(state.settings));
+            }
+            /* Legacy: support old exports that included the token */
+            if (parsed.sync.gistToken && parsed.sync.gistId) {
+                gistSync.token = parsed.sync.gistToken;
+                gistSync.saveState();
+                gistSync.updateUI();
+                document.getElementById('gist-token').value = parsed.sync.gistToken;
+                state.settings.gistToken = parsed.sync.gistToken;
+                localStorage.setItem('aig_settings', JSON.stringify(state.settings));
             }
         }
         this.save();
@@ -1363,7 +1448,7 @@ var aiGiant = {
         var added = 0;
         (parsed.shortcuts || []).forEach(function(s) {
             if (!existingUrls.has(s.url)) {
-                self.data.shortcuts.push(Object.assign({}, s, { id: Date.now() + Math.random() }));
+                self.data.shortcuts.push(Object.assign({}, s, { id: Date.now() + Math.floor(Math.random() * 1000) }));
                 existingUrls.add(s.url);
                 added++;
             }
@@ -1418,8 +1503,54 @@ var app = {
         if (savedSettings) {
             try { state.settings = Object.assign({}, state.settings, JSON.parse(savedSettings)); } catch(e) {}
         }
+        /* Check for Gist ID in URL hash (for cross-device restore) */
+        var hash = window.location.hash;
+        if (hash && hash.startsWith('#gist=')) {
+            var gistIdFromUrl = hash.substring(6);
+            if (gistIdFromUrl) {
+                document.getElementById('welcome-gist-id').value = gistIdFromUrl;
+            }
+        }
+        /* Show welcome screen for new devices */
+        if (aiGiant._isNewDevice()) {
+            document.getElementById('welcome-screen').classList.remove('hidden');
+        } else {
+            aiGiant.init();
+        }
+        privacyLock.init();
+    },
+
+    startFresh: function() {
+        document.getElementById('welcome-screen').classList.add('hidden');
         aiGiant.init();
     },
+
+    restoreFromWelcome: async function() {
+        var token = document.getElementById('welcome-gist-token').value.trim();
+        var gistId = document.getElementById('welcome-gist-id').value.trim();
+        if (!token) { ui.toast('Please enter your GitHub token', 'error'); return; }
+        if (!gistId) { ui.toast('Please enter your Gist ID', 'error'); return; }
+        /* Save Gist credentials */
+        gistSync.token = token;
+        gistSync.gistId = gistId;
+        gistSync.saveState();
+        /* Also save to settings fields */
+        state.settings.gistToken = token;
+        state.settings.gistId = gistId;
+        localStorage.setItem('aig_settings', JSON.stringify(state.settings));
+        document.getElementById('welcome-screen').classList.add('hidden');
+        /* Initialize with default data first */
+        aiGiant.init();
+        /* Then pull from Gist */
+        ui.toast('Restoring your data from GitHub Gist...', 'success');
+        try {
+            await gistSync.loadFromGist();
+            ui.toast('Data restored successfully! Welcome back.', 'success');
+        } catch(e) {
+            ui.toast('Could not restore from Gist: ' + e.message, 'error');
+        }
+    },
+
     saveSettings: function() {
         state.settings.gistToken = document.getElementById('gist-token').value.trim();
         state.settings.gistId = document.getElementById('gist-id').value.trim();
@@ -1431,7 +1562,7 @@ var app = {
 };
 
 /* ===== BOOT & EVENTS ===== */
-window.onload = function() { app.init(); privacyLock.init(); };
+window.onload = function() { app.init(); };
 
 // Click outside modal to close
 var modalIds = ['add-shortcut-modal', 'groups-modal', 'api-keys-modal', 'session-import-modal', 'settings-modal'];
